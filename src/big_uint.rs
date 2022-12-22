@@ -1,7 +1,7 @@
 use crate::digit::Digit;
 
 pub struct BigUInt {
-    digits: Vec<Digit> // from least to most significant
+    pub digits: Vec<Digit> // from least to most significant
 }
 
 
