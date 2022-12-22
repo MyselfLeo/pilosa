@@ -29,7 +29,7 @@ impl BigNum {
 
 
     /// Remove decimal zeroes, reducing the power in the same time
-    pub fn clean(&mut self) {
+    fn clean(&mut self) {
         if self.abs.digits.is_empty() {return}
         let check = |x: &mut BigNum| x.abs.digits.first().is_some() && x.abs.digits.first().unwrap().as_u8() == 0 && x.power > 0;
         while check(self) {
