@@ -9,10 +9,14 @@ impl Digit {
     /// Sum the 2 digits and return it along with if it created a carry or not
     pub fn sum(n1: &Digit, n2: &Digit) -> (Digit, bool) {
         let sum = n1.as_u8() + n2.as_u8();
-        let digit = Digit::from_u8(sum % 10);
-        let carry = sum >= 10;
+        (Digit::from_u8(sum % 10), sum >= 10)
+    }
 
-        (digit, carry)
+
+    /// Multiply the 2 digits and return it along with the potential carry
+    pub fn mul(n1: &Digit, n2: &Digit) -> (Digit, Digit) {
+        let mul = n1.as_u8() * n2.as_u8();
+        (Digit::from_u8(mul % 10), Digit::from_u8(mul / 10))
     }
 
 

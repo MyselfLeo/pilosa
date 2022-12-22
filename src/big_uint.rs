@@ -53,6 +53,40 @@ impl BigUInt {
 
         res
     }
+
+
+
+
+
+    pub fn mul(n1: &BigUInt, n2: &BigUInt) -> BigUInt {
+        let mut res = BigUInt {digits: vec![]};
+
+
+        // apply the multiplication for each digit of n1
+        // sum those results to get the final result
+        for (i, d1) in n1.digits.iter().enumerate() {
+            let mut local_res = BigUInt {digits: vec![]};
+            let mut carry: u8 = 0;
+
+            for d2 in &n2.digits {
+                let mul = d1.as_u8() * d2.as_u8() + carry;
+                
+                local_res.digits.push(Digit::from_u8(mul % 10));
+                carry = mul / 10;
+            }
+
+            // add the carry
+            if carry != 0 {local_res.digits.push(Digit::from_u8(carry))}
+
+            // insert i zeroes in local_res (multiplying it by 10^i)
+            for _ in 0..i {local_res.digits.insert(0, Digit::from_u8(0))}
+
+            res = BigUInt::sum(&res, &local_res);
+        }
+
+
+        res
+    }
 }
 
 
