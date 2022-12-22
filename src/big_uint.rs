@@ -1,5 +1,6 @@
 use crate::digit::Digit;
 
+#[derive(Clone)]
 pub struct BigUInt {
     pub digits: Vec<Digit> // from least to most significant
 }

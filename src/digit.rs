@@ -1,5 +1,6 @@
 use core::panic;
 
+#[derive(Clone)]
 pub struct Digit {
     value: u8 // strictly between 0 and 9 (obviously)
 }

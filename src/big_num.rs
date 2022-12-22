@@ -1,6 +1,7 @@
-use crate::big_uint::BigUInt;
+use crate::{big_uint::BigUInt, digit::Digit};
 
 
+#[derive(Clone)]
 pub struct BigNum {
     negative: bool,
     abs: BigUInt,
@@ -12,6 +13,13 @@ pub struct BigNum {
 impl BigNum {
     pub fn new(negative: bool, abs: BigUInt, power: u32) -> BigNum {
         BigNum { negative, abs, power }
+    }
+
+
+    /// Modify the given bignums so they have the same power
+    fn same_power(n1: &mut BigNum, n2: &mut BigNum) {
+        if n1.power < n2.power {n1.with_power(n2.power)}
+        else {n2.with_power(n1.power)}
     }
 
 
@@ -28,6 +36,28 @@ impl BigNum {
 
 
 
+    pub fn add(n1: &BigNum, n2: &BigNum) -> BigNum {
+        // values must be of the same type
+        if n1.negative != n2.negative {unimplemented!()}
+
+        let mut n1 = n1.clone();
+        let mut n2 = n2.clone();
+        BigNum::same_power(&mut n1, &mut n2);
+
+        // Create the new value
+        let sum = BigUInt::sum(&n1.abs, &n2.abs);
+        let mut res = BigNum {
+            negative: n1.negative, // n2.negative would work too (as n1.negative == n2.negative)
+            abs: sum,   
+            power: n1.power        // idem
+        };
+
+        res.clean();
+        res
+    }
+
+
+
     /// Remove decimal zeroes, reducing the power in the same time
     fn clean(&mut self) {
         if self.abs.digits.is_empty() {return}
@@ -35,6 +65,17 @@ impl BigNum {
         while check(self) {
             self.power -= 1;
             self.abs.digits.remove(0);
+        }
+    }
+
+    
+    /// Increase the power of the BigNum to the required value, add zeroes to match
+    fn with_power(&mut self, n: u32) {
+        if self.power >= n {return;}
+
+        while self.power != n {
+            self.power += 1;
+            self.abs.digits.insert(0, Digit::from_u8(0));
         }
     }
 }
