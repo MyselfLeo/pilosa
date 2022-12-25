@@ -57,14 +57,39 @@ impl BigNum {
 
     
 
-
-
-
     /// Modify the given bignums so they have the same power
     fn same_power(n1: &mut BigNum, n2: &mut BigNum) {
         if n1.power < n2.power {n1.with_power(n2.power)}
         else {n2.with_power(n1.power)}
     }
+
+
+
+
+
+    /// Remove decimal zeroes, reducing the power in the same time
+    fn clean(&mut self) {
+        if self.abs.digits.is_empty() {return}
+        let check = |x: &mut BigNum| x.abs.digits.first().is_some() && x.abs.digits.first().unwrap().as_u8() == 0 && x.power > 0;
+        while check(self) {
+            self.power -= 1;
+            self.abs.digits.remove(0);
+        }
+    }
+
+    
+    /// Increase the power of the BigNum to the required value, add zeroes to match
+    fn with_power(&mut self, n: u32) {
+        if self.power >= n {return;}
+
+        while self.power != n {
+            self.power += 1;
+            self.abs.digits.insert(0, Digit::from_u8(0));
+        }
+    }
+
+
+
 
 
     pub fn mul(n1: &BigNum, n2: &BigNum) -> BigNum {
@@ -77,6 +102,7 @@ impl BigNum {
 
         res
     }
+
 
 
 
@@ -102,26 +128,12 @@ impl BigNum {
 
 
 
-    /// Remove decimal zeroes, reducing the power in the same time
-    fn clean(&mut self) {
-        if self.abs.digits.is_empty() {return}
-        let check = |x: &mut BigNum| x.abs.digits.first().is_some() && x.abs.digits.first().unwrap().as_u8() == 0 && x.power > 0;
-        while check(self) {
-            self.power -= 1;
-            self.abs.digits.remove(0);
-        }
+
+    pub fn div(n1: &BigNum, n2: &BigNum) -> BigNum {
+        
     }
 
-    
-    /// Increase the power of the BigNum to the required value, add zeroes to match
-    fn with_power(&mut self, n: u32) {
-        if self.power >= n {return;}
 
-        while self.power != n {
-            self.power += 1;
-            self.abs.digits.insert(0, Digit::from_u8(0));
-        }
-    }
 }
 
 
