@@ -8,13 +8,13 @@ pub struct BigUInt {
 
 impl BigUInt {
     /// panics if the string is not a natural number
-    pub fn from_string(v: &str) -> BigUInt {
+    pub fn from_string(v: &str) -> Result<BigUInt, ()> {
         let mut big_uint = BigUInt {digits: vec![]};
         for c in v.chars() {
-            big_uint.digits.insert(0, Digit::from_char(c))
+            big_uint.digits.insert(0, Digit::from_char(c)?)
         };
 
-        big_uint
+        Ok(big_uint)
     }
 
 
@@ -95,6 +95,17 @@ impl BigUInt {
 
 
 impl std::fmt::Display for BigUInt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for d in self.digits.iter().rev() {
+            write!(f, "{}", d.as_char())?;
+        }
+        Ok(())
+    }
+}
+
+
+
+impl std::fmt::Debug for BigUInt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for d in self.digits.iter().rev() {
             write!(f, "{}", d.as_char())?;

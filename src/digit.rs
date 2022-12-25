@@ -1,5 +1,3 @@
-use core::panic;
-
 #[derive(Clone)]
 pub struct Digit {
     value: u8 // strictly between 0 and 9 (obviously)
@@ -31,7 +29,7 @@ impl Digit {
     }
 
     /// panics if c is not a digit
-    pub fn from_char(c: char) -> Digit {
+    pub fn from_char(c: char) -> Result<Digit, ()> {
         let v: u8 = match c {
             '0' => 0,
             '1' => 1,
@@ -43,10 +41,10 @@ impl Digit {
             '7' => 7,
             '8' => 8,
             '9' => 9,
-            _ => panic!("Given a non-digit char")
+            _ => return Err(())
         };
 
-        Digit::from_u8(v)
+        Ok(Digit::from_u8(v))
     }
 
 
@@ -68,5 +66,15 @@ impl Digit {
             9 => '9',
             _ => unreachable!()
         }
+    }
+}
+
+
+
+
+
+impl std::fmt::Debug for Digit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_char())
     }
 }
