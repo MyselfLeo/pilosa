@@ -10,7 +10,7 @@ const IMPLICIT_SIGN: bool  = false;
 #[derive(Clone, Debug)]
 pub struct BigNum {
     negative: bool,
-    abs: BigUInt,
+    pub abs: BigUInt,
     power: u32
 }
 
@@ -55,6 +55,9 @@ impl BigNum {
 
 
     pub fn from_i32(n: i32) -> Result<BigNum, String> {
+        BigNum::from_string(&n.to_string())
+    }
+    pub fn from_f64(n: f64) -> Result<BigNum, String> {
         BigNum::from_string(&n.to_string())
     }
 
@@ -113,43 +116,65 @@ impl BigNum {
     /// Return true if n1 < n2
     pub fn is_lower(n1: &BigNum, n2: &BigNum) -> bool {
         // easy cmp of signs
+        //println!("1");
         if n1.negative && !n2.negative {return true}
         else if !n1.negative && n2.negative {return false}
+        //println!("2");
 
         // if both are negative, calculations may vary
         let neg = n1.negative && n2.negative;
 
+        //println!("3: {neg}");
+
         // easy cmp with the number of whole digits
         if n1.abs.digits.len() - n1.power as usize != n2.abs.digits.len() - n2.power as usize {
+            //println!("4");
             if neg {return (n1.abs.digits.len() - n1.power as usize) > (n2.abs.digits.len() - n2.power as usize)}
             else {return (n1.abs.digits.len() - n1.power as usize) < (n2.abs.digits.len() - n2.power as usize)}
         }
 
+        //println!("5");
+
         // Same amount of digits before the '.', so we can compare each digit one by one
         let min_len = std::cmp::min(n1.abs.digits.len(), n2.abs.digits.len());
+
+        //println!("6: {min_len}");
+
+        let len_n1 = n1.abs.digits.len();
+        let len_n2 = n2.abs.digits.len();
+
         for i in 0..min_len {
-            let d1 = &n1.abs.digits[i];
-            let d2 = &n2.abs.digits[i];
+
+            //println!("7.{i}.1");
+
+            let d1 = &n1.abs.digits[len_n1 - i - 1];
+            let d2 = &n2.abs.digits[len_n2 - i - 1];
 
 
-            println!("Comparing digits n°{i}/{}: {:?} and {:?}", min_len - 1, d1, d2);
+            //println!("7.{i}.2: {:?} {:?}", d1, d2);
 
 
             if neg {
+                //println!("7.{i}.3");
                 if d1 < d2 {return false}
                 if d1 > d2 {return true}
             }
             else {
+                //println!("7.{i}.4");
                 if d1 < d2 {return true}
                 if d1 > d2 {return false}
             }
         }
 
+        //println!("8");
+
         // at this point we reach the end of at least one BigNum
         if neg {
+            //println!("9");
             n2.abs.digits.len() - 1 == min_len && n1.abs.digits.len() - 1 != min_len
         }
         else {
+            //println!("10");
             n1.abs.digits.len() - 1 == min_len && n2.abs.digits.len() - 1 != min_len
         }
     }
