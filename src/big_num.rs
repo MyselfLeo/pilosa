@@ -90,8 +90,29 @@ impl BigNum {
 
 
 
+    /// Return true if n1 == n2
+    /// Will not work if both BigNums are not cleaned
+    /// => BigNums MUST be cleaned after each operation
+    fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
+        n1.negative == n2.negative && n1.abs == n2.abs && n1.power == n2.power
+    }
 
 
+    /// Return true if n1 < n2
+    fn is_lower(n1: &BigNum, n2: &BigNum) -> bool {
+        // easy cmp of signs
+        if n1.negative && !n2.negative {true}
+        else if !n1.negative && n2.negative {false}
+
+        else {
+
+        }
+    }
+
+
+
+
+    /// Return the multiplication of 2 BigNums
     pub fn mul(n1: &BigNum, n2: &BigNum) -> BigNum {
         let sign = n1.negative != n2.negative;
         let abs = BigUInt::mul(&n1.abs, &n2.abs);
@@ -105,8 +126,8 @@ impl BigNum {
 
 
 
-
-    pub fn add(n1: &BigNum, n2: &BigNum) -> BigNum {
+    /// Return the sum of 2 BigNums of the same sign.
+    pub fn inner_add(n1: &BigNum, n2: &BigNum) -> BigNum {
         // values must be of the same type
         if n1.negative != n2.negative {unimplemented!()}
 
@@ -128,9 +149,10 @@ impl BigNum {
 
 
 
-
-    pub fn div(n1: &BigNum, n2: &BigNum) -> BigNum {
-        
+    /// Return the diff of 2 positive BigNums.
+    /// panics if n1 < n2
+    pub fn inner_sub(n1: &BigNum, n2: &BigNum) -> BigNum {
+        todo!()
     }
 
 
