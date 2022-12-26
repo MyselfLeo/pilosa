@@ -57,6 +57,22 @@ impl BigUInt {
 
 
 
+    // May not be useful for now
+    /*
+    /// Return true if n1 < n2
+    pub fn is_lower(n1: &BigUInt, n2: &BigUInt) -> bool {
+        if n1.digits.len() < n2.digits.len() {return true}
+        if n1.digits.len() > n2.digits.len() {return false}
+
+        for (d1, d2) in std::iter::zip(&n1.digits, &n2.digits) {
+            if d1 < d2 {return true}
+            if d1 > d2 {return false}
+        }
+
+        false
+    } */
+
+
 
 
     pub fn mul(n1: &BigUInt, n2: &BigUInt) -> BigUInt {

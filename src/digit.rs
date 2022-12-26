@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, PartialOrd)]
 pub struct Digit {
     value: u8 // strictly between 0 and 9 (obviously)
 }

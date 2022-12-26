@@ -54,6 +54,11 @@ impl BigNum {
     }
 
 
+    pub fn from_i32(n: i32) -> Result<BigNum, String> {
+        BigNum::from_string(&n.to_string())
+    }
+
+
 
     
 
@@ -90,23 +95,69 @@ impl BigNum {
 
 
 
+    /// Return the opposite of this BigNum
+    pub fn opposite(&self) -> BigNum {
+        BigNum { negative: !self.negative, abs: self.abs.clone(), power: self.power }
+    }
+
+
+
     /// Return true if n1 == n2
     /// Will not work if both BigNums are not cleaned
     /// => BigNums MUST be cleaned after each operation
-    fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
+    pub fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
         n1.negative == n2.negative && n1.abs == n2.abs && n1.power == n2.power
     }
 
 
     /// Return true if n1 < n2
-    fn is_lower(n1: &BigNum, n2: &BigNum) -> bool {
+    pub fn is_lower(n1: &BigNum, n2: &BigNum) -> bool {
         // easy cmp of signs
-        if n1.negative && !n2.negative {true}
-        else if !n1.negative && n2.negative {false}
+        if n1.negative && !n2.negative {return true}
+        else if !n1.negative && n2.negative {return false}
 
-        else {
+        // if both are negative, calculations may vary
+        let neg = n1.negative && n2.negative;
 
+        // easy cmp with the number of whole digits
+        if n1.abs.digits.len() - n1.power as usize != n2.abs.digits.len() - n2.power as usize {
+            if neg {return (n1.abs.digits.len() - n1.power as usize) > (n2.abs.digits.len() - n2.power as usize)}
+            else {return (n1.abs.digits.len() - n1.power as usize) < (n2.abs.digits.len() - n2.power as usize)}
         }
+
+        // Same amount of digits before the '.', so we can compare each digit one by one
+        let min_len = std::cmp::min(n1.abs.digits.len(), n2.abs.digits.len());
+        for i in 0..min_len {
+            let d1 = &n1.abs.digits[i];
+            let d2 = &n2.abs.digits[i];
+
+
+            println!("Comparing digits n°{i}/{}: {:?} and {:?}", min_len - 1, d1, d2);
+
+
+            if neg {
+                if d1 < d2 {return false}
+                if d1 > d2 {return true}
+            }
+            else {
+                if d1 < d2 {return true}
+                if d1 > d2 {return false}
+            }
+        }
+
+        // at this point we reach the end of at least one BigNum
+        if neg {
+            n2.abs.digits.len() - 1 == min_len && n1.abs.digits.len() - 1 != min_len
+        }
+        else {
+            n1.abs.digits.len() - 1 == min_len && n2.abs.digits.len() - 1 != min_len
+        }
+    }
+
+
+    /// Return true if n1 > n2
+    pub fn is_greater(n1: &BigNum, n2: &BigNum) -> bool {
+        !BigNum::are_equal(n1, n2) && !BigNum::is_lower(n1, n2)
     }
 
 
