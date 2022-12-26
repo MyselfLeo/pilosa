@@ -116,68 +116,47 @@ impl BigNum {
     /// Return true if n1 < n2
     pub fn is_lower(n1: &BigNum, n2: &BigNum) -> bool {
         // easy cmp of signs
-        //println!("1");
         if n1.negative && !n2.negative {return true}
         else if !n1.negative && n2.negative {return false}
-        //println!("2");
 
         // if both are negative, calculations may vary
         let neg = n1.negative && n2.negative;
 
-        //println!("3: {neg}");
-
         // easy cmp with the number of whole digits
         if n1.abs.digits.len() - n1.power as usize != n2.abs.digits.len() - n2.power as usize {
-            //println!("4");
             if neg {return (n1.abs.digits.len() - n1.power as usize) > (n2.abs.digits.len() - n2.power as usize)}
             else {return (n1.abs.digits.len() - n1.power as usize) < (n2.abs.digits.len() - n2.power as usize)}
         }
 
-        //println!("5");
-
         // Same amount of digits before the '.', so we can compare each digit one by one
         let min_len = std::cmp::min(n1.abs.digits.len(), n2.abs.digits.len());
-
-        //println!("6: {min_len}");
-
         let len_n1 = n1.abs.digits.len();
         let len_n2 = n2.abs.digits.len();
 
         for i in 0..min_len {
-
-            //println!("7.{i}.1");
-
             let d1 = &n1.abs.digits[len_n1 - i - 1];
             let d2 = &n2.abs.digits[len_n2 - i - 1];
 
-
-            //println!("7.{i}.2: {:?} {:?}", d1, d2);
-
-
             if neg {
-                //println!("7.{i}.3");
                 if d1 < d2 {return false}
                 if d1 > d2 {return true}
             }
             else {
-                //println!("7.{i}.4");
                 if d1 < d2 {return true}
                 if d1 > d2 {return false}
             }
         }
 
-        //println!("8");
-
         // at this point we reach the end of at least one BigNum
         if neg {
-            //println!("9");
             n2.abs.digits.len() - 1 == min_len && n1.abs.digits.len() - 1 != min_len
         }
         else {
-            //println!("10");
             n1.abs.digits.len() - 1 == min_len && n2.abs.digits.len() - 1 != min_len
         }
     }
+
+
 
 
     /// Return true if n1 > n2
@@ -204,8 +183,7 @@ impl BigNum {
 
     /// Return the sum of 2 BigNums of the same sign.
     pub fn inner_add(n1: &BigNum, n2: &BigNum) -> BigNum {
-        // values must be of the same type
-        if n1.negative != n2.negative {unimplemented!()}
+        if n1.negative != n2.negative {panic!("inner_add can only add BigNums of the same sign")}
 
         let mut n1 = n1.clone();
         let mut n2 = n2.clone();
@@ -216,7 +194,7 @@ impl BigNum {
         let mut res = BigNum {
             negative: n1.negative, // n2.negative would work too (as n1.negative == n2.negative)
             abs: sum,   
-            power: n1.power        // idem
+            power: n1.power        // same
         };
 
         res.clean();
@@ -228,6 +206,12 @@ impl BigNum {
     /// Return the diff of 2 positive BigNums.
     /// panics if n1 < n2
     pub fn inner_sub(n1: &BigNum, n2: &BigNum) -> BigNum {
+        if n1.negative || n2.negative {panic!("inner_sub can only substract positive BigNums")}
+        if n1 < n2 {panic!("inner_sub requires n1 > n2")}
+
+        
+        
+
         todo!()
     }
 
@@ -254,4 +238,40 @@ impl std::fmt::Display for BigNum {
 
         Ok(())
     }
+}
+
+
+
+
+impl PartialEq for BigNum {
+    fn eq(&self, other: &Self) -> bool {
+        BigNum::are_equal(self, other)
+    }
+}
+
+
+impl PartialOrd for BigNum {
+    fn lt(&self, other: &Self) -> bool {
+        BigNum::is_lower(self, other)
+    }
+
+    fn le(&self, other: &Self) -> bool {
+        !BigNum::is_greater(self, other)
+    }
+
+    fn gt(&self, other: &Self) -> bool {
+        BigNum::is_greater(self, other)
+    }
+
+    fn ge(&self, other: &Self) -> bool {
+        !BigNum::is_lower(self, other)
+    }
+
+
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if BigNum::are_equal(self, other) {Some(std::cmp::Ordering::Equal)}
+        else if BigNum::is_lower(self, other) {Some(std::cmp::Ordering::Less)}
+        else {Some(std::cmp::Ordering::Greater)}
+    }
+
 }

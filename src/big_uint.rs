@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::digit::Digit;
 
 #[derive(Clone, PartialEq)]
@@ -8,8 +10,8 @@ pub struct BigUInt {
 
 impl BigUInt {
     /// panics if the string is not a natural number
-    pub fn from_string(v: &str) -> Result<BigUInt, ()> {
-        let mut big_uint = BigUInt {digits: vec![]};
+    pub fn from_string(v: &str) -> Result<Self, ()> {
+        let mut big_uint = Self {digits: vec![]};
         for c in v.chars() {
             big_uint.digits.insert(0, Digit::from_char(c)?)
         };
@@ -18,8 +20,29 @@ impl BigUInt {
     }
 
 
-    pub fn sum(n1: &BigUInt, n2: &BigUInt) -> BigUInt {
-        let mut res = BigUInt {digits: vec![]};
+
+
+
+    
+    /// Return true if n1 < n2
+    pub fn is_lower(n1: &Self, n2: &Self) -> bool {
+        if n1.digits.len() < n2.digits.len() {return true}
+        if n1.digits.len() > n2.digits.len() {return false}
+
+        for (d1, d2) in std::iter::zip(&n1.digits, &n2.digits) {
+            if d1 < d2 {return true}
+            if d1 > d2 {return false}
+        }
+
+        false
+    }
+
+
+
+
+
+    pub fn sum(n1: &Self, n2: &Self) -> Self {
+        let mut res = Self {digits: vec![]};
         let mut carry = 0;
 
         let mut i = 0;
@@ -57,32 +80,18 @@ impl BigUInt {
 
 
 
-    // May not be useful for now
-    /*
-    /// Return true if n1 < n2
-    pub fn is_lower(n1: &BigUInt, n2: &BigUInt) -> bool {
-        if n1.digits.len() < n2.digits.len() {return true}
-        if n1.digits.len() > n2.digits.len() {return false}
-
-        for (d1, d2) in std::iter::zip(&n1.digits, &n2.digits) {
-            if d1 < d2 {return true}
-            if d1 > d2 {return false}
-        }
-
-        false
-    } */
 
 
 
 
-    pub fn mul(n1: &BigUInt, n2: &BigUInt) -> BigUInt {
-        let mut res = BigUInt {digits: vec![]};
+    pub fn mul(n1: &Self, n2: &Self) -> Self {
+        let mut res = Self {digits: vec![]};
 
 
         // apply the multiplication for each digit of n1
         // sum those results to get the final result
         for (i, d1) in n1.digits.iter().enumerate() {
-            let mut local_res = BigUInt {digits: vec![]};
+            let mut local_res = Self {digits: vec![]};
             let mut carry: u8 = 0;
 
             for d2 in &n2.digits {
@@ -98,9 +107,42 @@ impl BigUInt {
             // insert i zeroes in local_res (multiplying it by 10^i)
             for _ in 0..i {local_res.digits.insert(0, Digit::from_u8(0))}
 
-            res = BigUInt::sum(&res, &local_res);
+            res = Self::sum(&res, &local_res);
         }
 
+
+        res
+    }
+
+
+
+
+    /// Perform the subsraction n1 - n2
+    /// panics if n1 < n2
+    pub fn sub(n1: &Self, n2: &Self) -> Self {
+        if BigUInt::is_lower(n1, n2) {panic!("n1 must be >= n2")}
+
+        let mut n1 = n1.clone(); // only the greater number requires mutability
+        let mut res = BigUInt {digits: vec![]};
+
+        // iterates over each digits, from least to most significant
+        for i in 0..n1.digits.len() {
+            // n2 runs out of stock of digits
+            let digit = if n2.digits.len() <= i {
+                n1.digits[i]
+            }
+            else {
+                let mut top_value = n1.digits[i].as_u8();
+
+                // perform the substraction
+                if n1.digits[i] < n2.digits[i] {
+                    n1.digits[i+1] = Digit::from_u8(n1.digits[i+1].as_u8() - 1);
+                    top_value += 10;
+                }
+                Digit::from_u8(top_value - n2.digits[i].as_u8())
+            };
+            res.digits.push(digit)
+        }
 
         res
     }
