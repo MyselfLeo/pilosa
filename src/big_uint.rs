@@ -136,9 +136,18 @@ impl BigUInt {
 
                 // perform the substraction
                 if n1.digits[i] < n2.digits[i] {
-                    n1.digits[i+1] = Digit::from_u8(n1.digits[i+1].as_u8() - 1);
+                    // n1.digits[i+1] can be a zero. BUT there CANNOT be only zeroes, so we can iterate up the BigUInt
+                    // to find a value that we can substract
+                    let mut j = i;
+                    while n1.digits[j+1].as_u8() == 0 {
+                        n1.digits[j+1] = Digit::from_u8(9);
+                        j += 1;
+                    }
+                    n1.digits[j+1] = Digit::from_u8(n1.digits[j+1].as_u8() - 1);
+
                     top_value += 10;
                 }
+
                 Digit::from_u8(top_value - n2.digits[i].as_u8())
             };
             res.digits.push(digit)

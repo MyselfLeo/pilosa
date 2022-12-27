@@ -75,13 +75,21 @@ impl BigNum {
 
 
 
-    /// Remove decimal zeroes, reducing the power in the same time
+    /// Remove useless zeroes, reducing the power in the same time
     fn clean(&mut self) {
         if self.abs.digits.is_empty() {return}
+
+        // decimal zeroes (12.120 => 12.12)
         let check = |x: &mut BigNum| x.abs.digits.first().is_some() && x.abs.digits.first().unwrap().as_u8() == 0 && x.power > 0;
         while check(self) {
             self.power -= 1;
             self.abs.digits.remove(0);
+        }
+
+        // useless whole zeroes (012 => 12)
+        let check = |x: &mut BigNum| x.abs.digits.last().is_some() && x.abs.digits.last().unwrap().as_u8() == 0;
+        while check(self) {
+            self.abs.digits.pop();
         }
     }
 
@@ -108,13 +116,13 @@ impl BigNum {
     /// Return true if n1 == n2
     /// Will not work if both BigNums are not cleaned
     /// => BigNums MUST be cleaned after each operation
-    pub fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
+    fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
         n1.negative == n2.negative && n1.abs == n2.abs && n1.power == n2.power
     }
 
 
     /// Return true if n1 < n2
-    pub fn is_lower(n1: &BigNum, n2: &BigNum) -> bool {
+    fn is_lower(n1: &BigNum, n2: &BigNum) -> bool {
         // easy cmp of signs
         if n1.negative && !n2.negative {return true}
         else if !n1.negative && n2.negative {return false}
@@ -160,7 +168,7 @@ impl BigNum {
 
 
     /// Return true if n1 > n2
-    pub fn is_greater(n1: &BigNum, n2: &BigNum) -> bool {
+    fn is_greater(n1: &BigNum, n2: &BigNum) -> bool {
         !BigNum::are_equal(n1, n2) && !BigNum::is_lower(n1, n2)
     }
 
@@ -174,15 +182,15 @@ impl BigNum {
         let pow = n1.power + n2.power;
 
         let mut res = BigNum { negative: sign, abs: abs, power: pow };
+        
         res.clean();
-
         res
     }
 
 
 
     /// Return the sum of 2 BigNums of the same sign.
-    pub fn inner_add(n1: &BigNum, n2: &BigNum) -> BigNum {
+    fn inner_add(n1: &BigNum, n2: &BigNum) -> BigNum {
         if n1.negative != n2.negative {panic!("inner_add can only add BigNums of the same sign")}
 
         let mut n1 = n1.clone();
@@ -205,14 +213,60 @@ impl BigNum {
 
     /// Return the diff of 2 positive BigNums.
     /// panics if n1 < n2
-    pub fn inner_sub(n1: &BigNum, n2: &BigNum) -> BigNum {
+    fn inner_sub(n1: &BigNum, n2: &BigNum) -> BigNum {
         if n1.negative || n2.negative {panic!("inner_sub can only substract positive BigNums")}
         if n1 < n2 {panic!("inner_sub requires n1 > n2")}
 
-        
-        
+        let mut n1 = n1.clone();
+        let mut n2 = n2.clone();
 
-        todo!()
+        BigNum::same_power(&mut n1, &mut n2);
+
+        let mut res = BigNum::new(false, BigUInt::sub(&n1.abs, &n2.abs), n1.power);
+
+        res.clean();
+        res
+    }
+
+
+    /// Add two BigNums
+    pub fn add(n1: &BigNum, n2: &BigNum) -> BigNum {
+        // Transform the addition in order to use inner_add (addition of same sign)
+        // or inner_sub (substraction of positive BigNums)
+        match (n1.negative, n2.negative) {
+            (false, false) => { // x + y
+                BigNum::inner_add(n1, n2)
+            },
+            (true, true) => { // -x + -y
+                BigNum::inner_add(n1, n2)
+            },
+            (true, false) => { // -x + y <=> y - x
+                BigNum::sub(n2, &n1.opposite())
+            },
+            (false, true) => { // x + -y <=> x - y
+                BigNum::sub(n1, &n2.opposite())
+            },
+        }
+    }
+
+
+    /// Substract two BigNums
+    pub fn sub(n1: &BigNum, n2: &BigNum) -> BigNum {
+        match (n1.negative, n2.negative) {
+            (false, false) => {
+                if n1 < n2 {BigNum::inner_sub(n2, n1).opposite()} // require n1 > n2 :    (x-y) <=> -(y-x)
+                else {BigNum::inner_sub(n1, n2)}
+            },
+            (true, true) => {  // -x - -y <=> y - x
+                BigNum::sub(&n2.opposite(), &n1.opposite())
+            },
+            (true, false) => { // -x - y <=> -x + -y
+                BigNum::add(n1, &n2.opposite())
+            },
+            (false, true) => { // x - -y <=> x + y
+                BigNum::add(n1, n2)
+            },
+        }
     }
 
 
