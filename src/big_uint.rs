@@ -67,6 +67,9 @@ impl BigUInt {
             }
             else {break;}
 
+            carry += sum / 10;
+            sum = sum % 10;
+
             res.digits.push(Digit::from_u8(sum));
             i += 1;
         }

@@ -1,3 +1,5 @@
+use std::ops::{Add, Sub, Mul};
+
 use crate::big_uint::BigUInt;
 use crate::digit::Digit;
 
@@ -8,18 +10,22 @@ const IMPLICIT_SIGN: bool  = false;
 
 
 #[derive(Clone, Debug)]
-pub struct BigNum {
-    negative: bool,
+pub struct BigNum { // todo: remove pub
+    pub negative: bool,
     pub abs: BigUInt,
-    power: u32
+    pub power: u32
 }
 
 
 
 impl BigNum {
     fn new(negative: bool, abs: BigUInt, power: u32) -> BigNum {
-        BigNum { negative, abs, power }
+        let mut res = BigNum {negative, abs, power};
+        res.clean();
+        res
     }
+    pub fn zero() -> BigNum {BigNum {negative: false, abs: BigUInt {digits: vec![Digit::from_u8(0)]}, power: 0}}
+    pub fn one() -> BigNum {BigNum {negative: false, abs: BigUInt {digits: vec![Digit::from_u8(1)]}, power: 0}}
 
 
     /// Takes a number as a string (ex: -512.3245)
@@ -157,10 +163,10 @@ impl BigNum {
 
         // at this point we reach the end of at least one BigNum
         if neg {
-            n2.abs.digits.len() - 1 == min_len && n1.abs.digits.len() - 1 != min_len
+            len_n2 == min_len && len_n1 != min_len
         }
         else {
-            n1.abs.digits.len() - 1 == min_len && n2.abs.digits.len() - 1 != min_len
+            len_n1 == min_len && len_n2 != min_len
         }
     }
 
@@ -185,6 +191,21 @@ impl BigNum {
         
         res.clean();
         res
+    }
+
+
+
+    /// Return the euclidian quotient and remainder of num / denom
+    pub fn euclidian(num: &BigNum, denom: &BigNum) -> (BigNum, BigNum) {
+        let mut remainder = num.clone();
+        let mut quotient = BigNum::zero();
+
+        while &remainder >= denom {
+            remainder = &remainder - denom;
+            quotient = quotient + BigNum::one();
+        }
+
+        (quotient, remainder)
     }
 
 
@@ -241,10 +262,10 @@ impl BigNum {
                 BigNum::inner_add(n1, n2)
             },
             (true, false) => { // -x + y <=> y - x
-                BigNum::sub(n2, &n1.opposite())
+                n2 - &n1.opposite()
             },
             (false, true) => { // x + -y <=> x - y
-                BigNum::sub(n1, &n2.opposite())
+                n1 - &n2.opposite()
             },
         }
     }
@@ -258,13 +279,13 @@ impl BigNum {
                 else {BigNum::inner_sub(n1, n2)}
             },
             (true, true) => {  // -x - -y <=> y - x
-                BigNum::sub(&n2.opposite(), &n1.opposite())
+                &n2.opposite() - &n1.opposite()
             },
             (true, false) => { // -x - y <=> -x + -y
-                BigNum::add(n1, &n2.opposite())
+                n1 + &n2.opposite()
             },
             (false, true) => { // x - -y <=> x + y
-                BigNum::add(n1, n2)
+                n1 + n2
             },
         }
     }
@@ -328,4 +349,56 @@ impl PartialOrd for BigNum {
         else {Some(std::cmp::Ordering::Greater)}
     }
 
+}
+
+
+
+
+
+
+impl Add for &BigNum {
+    type Output = BigNum;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        BigNum::add(self, rhs)
+    }
+}
+impl Add for BigNum {
+    type Output = BigNum;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        BigNum::add(&self, &rhs)
+    }
+}
+
+
+impl Sub for &BigNum {
+    type Output = BigNum;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        BigNum::sub(self, rhs)
+    }
+}
+impl Sub for BigNum {
+    type Output = BigNum;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        BigNum::sub(&self, &rhs)
+    }
+}
+
+
+impl Mul for &BigNum {
+    type Output = BigNum;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        BigNum::mul(self, rhs)
+    }
+}
+impl Mul for BigNum {
+    type Output = BigNum;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        BigNum::mul(&self, &rhs)
+    }
 }
