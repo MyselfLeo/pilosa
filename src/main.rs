@@ -2,19 +2,25 @@ mod big_uint;
 mod digit;
 mod big_num;
 
+mod core;
+
 use big_num::BigNum;
 use big_uint::BigUInt;
 
 
 
+
+
+
+
+
+
+
 fn main() {
-    let b1 = BigNum::from_string("12124").unwrap();
-    let b2 = BigNum::from_string("34").unwrap();
+    let b1 = vec![1, 2, 3, 5, 6, 3, 7, 1, 9, 0, 0, 4];
+    let b2 = vec![1];
 
-    let (quo, res) = BigNum::euclidian(&b1, &b2);
-
-    println!("{b1} // {b2} = {quo}");
-    println!("{b1} % {b2} = {res}");
+    println!("{:?}", core::u_mul(b2, b1));
 }
 
 
