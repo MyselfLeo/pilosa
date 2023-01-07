@@ -7,6 +7,23 @@ fn clean_ubint(ubint: &mut Vec<u8>) {
 
 
 
+/// Return true if u < v
+pub fn ub_is_lower(u: Vec<u8>, v: Vec<u8>) -> bool {
+    if u.len() < v.len() {return true}
+    if u.len() > v.len() {return false}
+
+    for (du, dv) in std::iter::zip(&u, &v) {
+        if du < dv {return true}
+        if du > dv {return false}
+    }
+
+    false
+}
+
+
+
+
+
 /// Add 2 unsigned bit ints u and v
 /// (represented by vecs of u8, from least to most significant digit)
 pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {

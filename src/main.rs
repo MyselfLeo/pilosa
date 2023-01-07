@@ -20,7 +20,7 @@ fn main() {
     let b1 = vec![1, 3, 6];
     let b2 = vec![1];
 
-    println!("{:?}", core::ub_add(b2, b1));
+    println!("{:?}", core::ub_is_lower(b2, b1));
 }
 
 
