@@ -1,6 +1,6 @@
 
 /// Clean useless zeroes of the big int
-fn clean_ubint(ubint: &mut Vec<u8>) {
+fn ub_clean(ubint: &mut Vec<u8>) {
     while let Some(0) = ubint.last() {ubint.pop();}
 }
 
@@ -50,7 +50,7 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     }
     w[m] = k; // final carry
 
-    clean_ubint(&mut w);
+    ub_clean(&mut w);
     w
 }
 
@@ -94,6 +94,6 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
         }
         w[j+m] = k; // final carry
     }
-    clean_ubint(&mut w);
+    ub_clean(&mut w);
     w
 }
