@@ -17,17 +17,8 @@ use big_uint::BigUInt;
 
 
 fn main() {
-    let b1 = vec![1, 3, 6];
-    let b2 = vec![1];
+    let b1 = vec![0, 0, 1];
+    let b2 = vec![5, 0, 0];
 
-    println!("{:?}", core::ub_is_lower(b2, b1));
+    println!("{:?}", core::ub_sub(b1, b2));
 }
-
-
-/*
-fn main() {
-    let b1 = BigNum::from_string("99").unwrap();
-    let b2 = BigNum::one();
-
-    println!("{b1} + {b2} = {}", &b1 + &b2);
-}*/

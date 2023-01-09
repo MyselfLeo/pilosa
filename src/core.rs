@@ -1,4 +1,3 @@
-
 /// Clean useless zeroes of the big int
 fn ub_clean(ubint: &mut Vec<u8>) {
     while let Some(0) = ubint.last() {ubint.pop();}
@@ -24,7 +23,7 @@ pub fn ub_is_lower(u: Vec<u8>, v: Vec<u8>) -> bool {
 
 
 
-/// Add 2 unsigned bit ints u and v
+/// Add 2 unsigned big ints u and v
 /// (represented by vecs of u8, from least to most significant digit)
 pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() >= v.len()
@@ -58,11 +57,39 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
+/// Substract an unsigned big int u to an unsigned big int v
+/// (represented by vecs of u8, from least to most significant digit)
+/// requires u >= v and u and v of the same size (panics otherwise)
+/// Based on the substraction algorithm in the Art of Computer Programming
+pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+    if u.len() != v.len() {panic!("Both unsigned big ints must have the same amount of digits")}
+
+    let n = u.len();
+    let mut w = vec![0; n];
+
+    let mut k: i16 = 0; // carry
+    for j in 0..n {
+        let t = u[j] as i16 - v[j] as i16 + k;
+
+        w[j] = t.rem_euclid(10) as u8;
+        k = -((t < 0) as i16);
+    }
+
+    if k != 0 {panic!("Expected u >= v")}
+
+    ub_clean(&mut w);
+    w
+}
+
+
+
+
+
 
 
 /// Multiply 2 unsigned big ints u and v
 /// (represented by vecs of u8, from least to most significant digit)
-/// Base on the multiplication algorithm in the Art of Computer Programming
+/// Based on the multiplication algorithm in the Art of Computer Programming
 pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() >= v.len()
     if u.len() < v.len() {return ub_mul(v, u)}
