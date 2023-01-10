@@ -62,7 +62,11 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// requires u >= v and u and v of the same size (panics otherwise)
 /// Based on the substraction algorithm in the Art of Computer Programming
 pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+    // the algorithm requires that u.len() == v.len()
     if u.len() != v.len() {panic!("Both unsigned big ints must have the same amount of digits")}
+
+    // optimization
+    if v == vec![0] {return u;}
 
     let n = u.len();
     let mut w = vec![0; n];

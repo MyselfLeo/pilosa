@@ -1,12 +1,7 @@
-mod big_uint;
-mod digit;
 mod big_num;
-
 mod core;
 
 use big_num::BigNum;
-use big_uint::BigUInt;
-
 
 
 

@@ -1,7 +1,6 @@
 use std::ops::{Add, Sub, Mul};
 
-use crate::big_uint::BigUInt;
-use crate::digit::Digit;
+use crate::core;
 
 
 
@@ -12,20 +11,22 @@ const IMPLICIT_SIGN: bool  = false;
 #[derive(Clone, Debug)]
 pub struct BigNum { // todo: remove pub
     pub negative: bool,
-    pub abs: BigUInt,
+    pub abs: Vec<u8>,
     pub power: u32
 }
 
 
 
 impl BigNum {
-    fn new(negative: bool, abs: BigUInt, power: u32) -> BigNum {
+    fn new(negative: bool, abs: Vec<u8>, power: u32) -> BigNum {
         let mut res = BigNum {negative, abs, power};
         res.clean();
         res
     }
-    pub fn zero() -> BigNum {BigNum {negative: false, abs: BigUInt {digits: vec![Digit::from_u8(0)]}, power: 0}}
-    pub fn one() -> BigNum {BigNum {negative: false, abs: BigUInt {digits: vec![Digit::from_u8(1)]}, power: 0}}
+    
+    pub fn zero() -> BigNum {BigNum {negative: false, abs: vec![0], power: 0}}
+    pub fn one() -> BigNum {BigNum {negative: false, abs: vec![1], power: 0}}
+
 
 
     /// Takes a number as a string (ex: -512.3245)
@@ -55,9 +56,21 @@ impl BigNum {
         }
         string = string.replace(".", "");
 
-        let abs = BigUInt::from_string(&string).or(Err(format!("Invalid format: {origin_string}")))?;
-        Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), abs, power as u32))
+        // convert string of digits (ex: 12345) to vec of digits from least to most significant ([5, 4, 3, 2, 1])
+        let abs = string
+            .chars()
+            .rev()
+            .map(|c| c.to_digit(10).and_then(|d| Some(d as u8)))
+            .collect::<Option<Vec<u8>>>();
+
+        match abs {
+            None => Err("Invalid format".to_string()),
+            Some(a) => Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32))
+        }
     }
+
+
+
 
 
     pub fn from_i32(n: i32) -> Result<BigNum, String> {
@@ -81,21 +94,16 @@ impl BigNum {
 
 
 
-    /// Remove useless zeroes, reducing the power in the same time
+
+    /// Reduce the power as much possible by removing useless decimal zeroes (0.10 => 0.1)
     fn clean(&mut self) {
-        if self.abs.digits.is_empty() {return}
+        if self.abs.is_empty() {return}
 
         // decimal zeroes (12.120 => 12.12)
-        let check = |x: &mut BigNum| x.abs.digits.first().is_some() && x.abs.digits.first().unwrap().as_u8() == 0 && x.power > 0;
+        let check = |x: &mut BigNum| x.abs.first().is_some() && x.abs.first().unwrap() == &0 && x.power > 0;
         while check(self) {
             self.power -= 1;
-            self.abs.digits.remove(0);
-        }
-
-        // useless whole zeroes (012 => 12)
-        let check = |x: &mut BigNum| x.abs.digits.last().is_some() && x.abs.digits.last().unwrap().as_u8() == 0;
-        while check(self) {
-            self.abs.digits.pop();
+            self.abs.remove(0);
         }
     }
 
@@ -106,7 +114,7 @@ impl BigNum {
 
         while self.power != n {
             self.power += 1;
-            self.abs.digits.insert(0, Digit::from_u8(0));
+            self.abs.insert(0, 0);
         }
     }
 
@@ -137,19 +145,19 @@ impl BigNum {
         let neg = n1.negative && n2.negative;
 
         // easy cmp with the number of whole digits
-        if n1.abs.digits.len() - n1.power as usize != n2.abs.digits.len() - n2.power as usize {
-            if neg {return (n1.abs.digits.len() - n1.power as usize) > (n2.abs.digits.len() - n2.power as usize)}
-            else {return (n1.abs.digits.len() - n1.power as usize) < (n2.abs.digits.len() - n2.power as usize)}
+        if n1.abs.len() - n1.power as usize != n2.abs.len() - n2.power as usize {
+            if neg {return (n1.abs.len() - n1.power as usize) > (n2.abs.len() - n2.power as usize)}
+            else {return (n1.abs.len() - n1.power as usize) < (n2.abs.len() - n2.power as usize)}
         }
 
         // Same amount of digits before the '.', so we can compare each digit one by one
-        let min_len = std::cmp::min(n1.abs.digits.len(), n2.abs.digits.len());
-        let len_n1 = n1.abs.digits.len();
-        let len_n2 = n2.abs.digits.len();
+        let min_len = std::cmp::min(n1.abs.len(), n2.abs.len());
+        let len_n1 = n1.abs.len();
+        let len_n2 = n2.abs.len();
 
         for i in 0..min_len {
-            let d1 = &n1.abs.digits[len_n1 - i - 1];
-            let d2 = &n2.abs.digits[len_n2 - i - 1];
+            let d1 = &n1.abs[len_n1 - i - 1];
+            let d2 = &n2.abs[len_n2 - i - 1];
 
             if neg {
                 if d1 < d2 {return false}
@@ -184,7 +192,7 @@ impl BigNum {
     /// Return the multiplication of 2 BigNums
     pub fn mul(n1: &BigNum, n2: &BigNum) -> BigNum {
         let sign = n1.negative != n2.negative;
-        let abs = BigUInt::mul(&n1.abs, &n2.abs);
+        let abs = core::ub_mul(n1.abs.clone(), n2.abs.clone());
         let pow = n1.power + n2.power;
 
         let mut res = BigNum { negative: sign, abs: abs, power: pow };
@@ -200,13 +208,16 @@ impl BigNum {
         let mut remainder = num.clone();
         let mut quotient = BigNum::zero();
 
-        while &remainder >= denom {
+        while &remainder >= &denom {
             remainder = &remainder - denom;
             quotient = quotient + BigNum::one();
         }
 
         (quotient, remainder)
     }
+
+
+
 
 
 
@@ -219,7 +230,7 @@ impl BigNum {
         BigNum::same_power(&mut n1, &mut n2);
 
         // Create the new value
-        let sum = BigUInt::sum(&n1.abs, &n2.abs);
+        let sum = core::ub_add(n1.abs, n2.abs);
         let mut res = BigNum {
             negative: n1.negative, // n2.negative would work too (as n1.negative == n2.negative)
             abs: sum,   
@@ -229,6 +240,9 @@ impl BigNum {
         res.clean();
         res
     }
+
+
+
 
 
 
@@ -243,11 +257,15 @@ impl BigNum {
 
         BigNum::same_power(&mut n1, &mut n2);
 
-        let mut res = BigNum::new(false, BigUInt::sub(&n1.abs, &n2.abs), n1.power);
+        let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs), n1.power);
 
         res.clean();
         res
     }
+
+
+
+    
 
 
     /// Add two BigNums
@@ -269,6 +287,10 @@ impl BigNum {
             },
         }
     }
+
+
+
+
 
 
     /// Substract two BigNums
@@ -300,7 +322,7 @@ impl std::fmt::Display for BigNum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.negative {write!(f, "-")?};
         
-        let nb_digits = self.abs.digits.len(); 
+        let nb_digits = self.abs.len(); 
         let dot_pos = nb_digits - self.power as usize;
 
         // leading 0 if |self| < 1
@@ -308,7 +330,7 @@ impl std::fmt::Display for BigNum {
 
         for i in 0..nb_digits {
             if i == dot_pos {write!(f, ".")?};
-            write!(f, "{}", self.abs.digits[nb_digits - i - 1].as_char())?;
+            write!(f, "{}", self.abs[nb_digits - i - 1])?;
         };
 
         Ok(())
