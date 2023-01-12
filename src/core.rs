@@ -143,7 +143,25 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// 
 /// returns q = floor(u/v)  with q.len() = m
 ///     and r = u mod v     with r.len() = n
+/// 
+/// Based on the division algorithm in the Art of Computer Programming
 pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+    let n = v.len();
+    let m = u.len() - n;
+
+    // normalisation
+    let d = 9 / v[n-1];
+    let nu = ub_mul(u, vec![d]);
+    let nv = ub_mul(v, vec![d]);
+
+    assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
+    assert!(nv.len() == n, "vu is not n in length");
+
+
+    
+
+
+    todo!()
 }
 
 
