@@ -149,16 +149,36 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     let n = v.len();
     let m = u.len() - n;
 
-    // normalisation
+    // normalisation so that nv[n-1] > b/2 in any case
     let d = 9 / v[n-1];
     let nu = ub_mul(u, vec![d]);
     let nv = ub_mul(v, vec![d]);
+
 
     assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
     assert!(nv.len() == n, "vu is not n in length");
 
 
-    
+    for j in (1..m+1).rev() { // m -> 1
+
+        // estimation of q (called q_est) and r (r_est)
+        let mut q_est = nu[j+n] * 10 + nu[j+n-1] / nv[n-1];
+        let mut r_est = (nu[j+n] * 10 + nu[j+n-1]).rem_euclid(nv[n-1]);
+
+
+        // i think i need a do-while here so pretend it's one
+        'do_while: loop {
+            if q_est == 10 || q_est * nv[n-2] > 10 * r_est + nu[j+n-2] {
+                q_est -= 1;
+                r_est += nv[n-1];
+            }
+            // while r_est < b
+            if r_est >= 10 {break 'do_while;}
+        }
+
+        // multiply and substract
+        
+    }
 
 
     todo!()
