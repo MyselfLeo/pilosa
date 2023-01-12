@@ -128,3 +128,30 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     ub_clean(&mut w);
     w
 }
+
+
+
+
+
+
+
+
+
+/// u.len() = m+n
+/// v.len() = n
+/// both cleaned and n > 1
+/// 
+/// returns q = floor(u/v)  with q.len() = m
+///     and r = u mod v     with r.len() = n
+pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+}
+
+
+
+
+
+
+
+
+
+// todo: algorithm for when n=1
