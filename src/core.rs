@@ -177,7 +177,15 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
         }
 
         // multiply and substract
-        
+        for i in 0..n {
+            // at least same length as 
+            let v_mult = ub_mul(nv.clone(), vec![q_est]);
+            let sub = nu[j + i] as i16 - v_mult[i] as i16;
+
+            if sub < 0 {
+                
+            }
+        }
     }
 
 
