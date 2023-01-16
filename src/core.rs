@@ -7,11 +7,11 @@ fn ub_clean(ubint: &mut Vec<u8>) {
 
 
 /// Return true if u < v
-pub fn ub_is_lower(u: Vec<u8>, v: Vec<u8>) -> bool {
+pub fn ub_is_lower(u: &Vec<u8>, v: &Vec<u8>) -> bool {
     if u.len() < v.len() {return true}
     if u.len() > v.len() {return false}
 
-    for (du, dv) in std::iter::zip(&u, &v) {
+    for (du, dv) in std::iter::zip(u, v) {
         if du < dv {return true}
         if du > dv {return false}
     }
@@ -151,8 +151,12 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
     // normalisation so that nv[n-1] > b/2 in any case
     let d = 9 / v[n-1];
-    let nu = ub_mul(u, vec![d]);
+    let mut nu = ub_mul(u, vec![d]);
     let nv = ub_mul(v, vec![d]);
+
+
+    let mut q = vec![0u8; m+1];
+    let r = vec![0u8; n];
 
 
     assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
@@ -176,20 +180,57 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
             if r_est >= 10 {break 'do_while;}
         }
 
-        // multiply and substract
-        for i in 0..n {
-            // at least same length as 
-            let v_mult = ub_mul(nv.clone(), vec![q_est]);
-            let sub = nu[j + i] as i16 - v_mult[i] as i16;
+        
+        let u_slice = nu[j..j+n+1].to_vec();
+        let v_slice = ub_mul(nv.clone(), vec![q_est]);
 
-            if sub < 0 {
-                
+        assert!(v_slice.len() == nv.len(), "v_slice.len() != nv.len()");
+
+
+        // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
+        let borrow = ub_is_lower(&u_slice, &v_slice);
+        let sub = if borrow {
+            let mut ten_pow = vec![0u8; n+1]; // 10^(n+1)
+            ten_pow.push(1);
+
+            ub_sub(ten_pow, ub_sub(v_slice, u_slice))
+        }
+        else {
+            ub_sub(u_slice, v_slice)
+        };
+
+        assert_eq!(sub.len(), n, "sub is not of length n");
+
+        // replace the values in nu by the values of sub (between j and j+n)
+        for i in 0..n {
+            nu[i+j] = sub[i];
+        }
+
+        q[j] = q_est;
+        assert!(q[j] < 10, "q_est was not a digit");
+
+        
+        if borrow {
+            q[j] -= 1;
+
+            // todo: can be refactored as an in-place addition on nu
+            let mut slice = nv.clone();
+            slice.push(0);
+            let add = ub_add(slice, nu[j..n+j+1].to_vec());
+
+            for i in 0..n {
+                nu[i+j] = add[i];
             }
         }
     }
 
 
-    todo!()
+    // unnormalize
+    //todo
+
+
+    // return the quotient
+    q
 }
 
 
