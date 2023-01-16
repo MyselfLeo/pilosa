@@ -149,19 +149,32 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     let n = v.len();
     let m = u.len() - n;
 
+    assert!(n > 1, "n should be > 1");
+
     // normalisation so that nv[n-1] > b/2 in any case
     let d = 9 / v[n-1];
+
+    println!("n: {n}");
+    println!("m: {m}");
+    println!("d: {d}");
+
+    assert!(v[n-1] != 0, "v[n-1] should not be 0");
+
     let mut nu = ub_mul(u, vec![d]);
+    nu.push(0);
     let nv = ub_mul(v, vec![d]);
 
 
     let mut q = vec![0u8; m+1];
     let r = vec![0u8; n];
 
+    println!("nu: {:?}", nu);
+    println!("nv: {:?}", nv);
 
     assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
-    assert!(nv.len() == n, "vu is not n in length");
+    assert!(nv.len() == n, "nv is not n in length");
 
+    assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
 
     for j in (1..m+1).rev() { // m -> 1
 
