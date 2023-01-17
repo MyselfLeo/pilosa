@@ -161,7 +161,9 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     assert!(v[n-1] != 0, "v[n-1] should not be 0");
 
     let mut nu = ub_mul(u, vec![d]);
-    nu.push(0);
+    
+    if d == 1 {nu.push(0);}
+
     let nv = ub_mul(v, vec![d]);
 
 
@@ -183,19 +185,24 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
         let mut q_est = (nu[j+n] * 10 + nu[j+n-1]) / nv[n-1];
         let mut r_est = (nu[j+n] * 10 + nu[j+n-1]).rem_euclid(nv[n-1]);
 
+        println!("q_est (before): {q_est}");
+        println!("r_est (before): {r_est}");
 
         // i think i need a do-while here so pretend it's one
         'do_while: loop {
-            //println!("q_est: {q_est}");
-            //println!("r_est: {r_est}");
             if q_est == 10 || q_est * nv[n-2] > 10 * r_est + nu[j+n-2] {
                 q_est -= 1;
                 r_est += nv[n-1];
+
+                if r_est >= 10 {break 'do_while;}
             }
-            // while r_est < b
-            if r_est >= 10 {break 'do_while;}
+            else {
+                break 'do_while;
+            }
         }
 
+        println!("q_est (after): {q_est}");
+        println!("r_est (after): {r_est}");
         
         let u_slice = nu[j..j+n+1].to_vec();
         let v_slice = ub_mul(nv.clone(), vec![q_est]);
