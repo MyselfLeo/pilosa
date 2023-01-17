@@ -177,14 +177,17 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
 
     for j in (1..m+1).rev() { // m -> 1
+        
 
         // estimation of q (called q_est) and r (r_est)
-        let mut q_est = nu[j+n] * 10 + nu[j+n-1] / nv[n-1];
+        let mut q_est = (nu[j+n] * 10 + nu[j+n-1]) / nv[n-1];
         let mut r_est = (nu[j+n] * 10 + nu[j+n-1]).rem_euclid(nv[n-1]);
 
 
         // i think i need a do-while here so pretend it's one
         'do_while: loop {
+            //println!("q_est: {q_est}");
+            //println!("r_est: {r_est}");
             if q_est == 10 || q_est * nv[n-2] > 10 * r_est + nu[j+n-2] {
                 q_est -= 1;
                 r_est += nv[n-1];
