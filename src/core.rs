@@ -1,6 +1,9 @@
 /// Clean useless zeroes of the big int
 fn ub_clean(ubint: &mut Vec<u8>) {
-    while let Some(0) = ubint.last() {ubint.pop();}
+    while let Some(0) = ubint.last() {
+        if ubint.len() > 1 {ubint.pop();}
+        else {break}
+    }
 }
 
 
@@ -141,11 +144,11 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// v.len() = n
 /// both cleaned and n > 1
 /// 
-/// returns q = floor(u/v)  with q.len() = m
-///     and r = u mod v     with r.len() = n
+/// returns q = floor(u/v)
+///     and r = u mod v
 /// 
 /// Based on the division algorithm in the Art of Computer Programming
-pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
     let n = v.len();
     let m = u.len() - n;
 
@@ -154,17 +157,20 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // normalisation so that nv[n-1] > b/2 in any case
     let d = 9 / v[n-1];
 
+    println!("d: {d}");
+
     assert!(v[n-1] != 0, "v[n-1] should not be 0");
 
     let mut nu = ub_mul(u, vec![d]);
     
-    if d == 1 {nu.push(0);}
+    if nu.len() < n+m+1 {nu.push(0);}
+
+    println!("nu: {:?}", nu);
 
     let nv = ub_mul(v, vec![d]);
 
 
     let mut q = vec![0u8; m+1];
-    let r = vec![0u8; n];
 
     assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
     assert!(nv.len() == n, "nv is not n in length");
@@ -246,8 +252,10 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     //todo
 
 
-    // return the quotient
-    q
+    // clean and return the results
+    ub_clean(&mut q);
+
+    (q, nu, d)
 }
 
 
