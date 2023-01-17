@@ -154,10 +154,6 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // normalisation so that nv[n-1] > b/2 in any case
     let d = 9 / v[n-1];
 
-    println!("n: {n}");
-    println!("m: {m}");
-    println!("d: {d}");
-
     assert!(v[n-1] != 0, "v[n-1] should not be 0");
 
     let mut nu = ub_mul(u, vec![d]);
@@ -170,23 +166,17 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     let mut q = vec![0u8; m+1];
     let r = vec![0u8; n];
 
-    println!("nu: {:?}", nu);
-    println!("nv: {:?}", nv);
-
     assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
     assert!(nv.len() == n, "nv is not n in length");
 
     assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
 
-    for j in (1..m+1).rev() { // m -> 1
+    for j in (0..m+1).rev() { // m -> 1
         
 
         // estimation of q (called q_est) and r (r_est)
         let mut q_est = (nu[j+n] * 10 + nu[j+n-1]) / nv[n-1];
         let mut r_est = (nu[j+n] * 10 + nu[j+n-1]).rem_euclid(nv[n-1]);
-
-        println!("q_est (before): {q_est}");
-        println!("r_est (before): {r_est}");
 
         // i think i need a do-while here so pretend it's one
         'do_while: loop {
@@ -200,32 +190,20 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
                 break 'do_while;
             }
         }
-
-        println!("q_est (after): {q_est}");
-        println!("r_est (after): {r_est}");
         
         let u_slice = nu[j..j+n+1].to_vec();
         let mut v_slice = ub_mul(nv.clone(), vec![q_est]);
-
-        println!("nu: {:?}", nu);
-        println!("u_slice: {:?}", u_slice);        
-
-        println!("nv: {:?}", nv);
-        println!("v_slice: {:?}", v_slice);
 
         assert!(v_slice.len() <= nv.len()+1, "v_slice.len() is > nv.len()+1");
       
         // assure that v_slice is the same length as nv
         while v_slice.len() < nv.len()+1 {v_slice.push(0);}
 
-        println!("nv (after rect.): {:?}", nv);
-        println!("v_slice (after rect.): {:?}", v_slice);
-
         assert!(v_slice.len() == nv.len()+1, "v_slice.len() != nv.len()+1 (even after rectification)");
 
         // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
         let borrow = ub_is_lower(&u_slice, &v_slice);
-        let sub = if borrow {
+        let mut sub = if borrow {
             let mut ten_pow = vec![0u8; n+1]; // 10^(n+1)
             ten_pow.push(1);
 
@@ -235,9 +213,10 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
             ub_sub(u_slice, v_slice)
         };
 
-        println!("substraction: {:?}", sub);
+        assert!(sub.len() <= n, "sub is too long");
 
-        assert_eq!(sub.len(), n, "sub is not of length n");
+        // assure that sub is the of length n
+        while sub.len() < n {sub.push(0);}
 
         // replace the values in nu by the values of sub (between j and j+n)
         for i in 0..n {
