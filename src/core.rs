@@ -205,10 +205,23 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
         println!("r_est (after): {r_est}");
         
         let u_slice = nu[j..j+n+1].to_vec();
-        let v_slice = ub_mul(nv.clone(), vec![q_est]);
+        let mut v_slice = ub_mul(nv.clone(), vec![q_est]);
 
-        assert!(v_slice.len() == nv.len(), "v_slice.len() != nv.len()");
+        println!("nu: {:?}", nu);
+        println!("u_slice: {:?}", u_slice);        
 
+        println!("nv: {:?}", nv);
+        println!("v_slice: {:?}", v_slice);
+
+        assert!(v_slice.len() <= nv.len()+1, "v_slice.len() is > nv.len()+1");
+      
+        // assure that v_slice is the same length as nv
+        while v_slice.len() < nv.len()+1 {v_slice.push(0);}
+
+        println!("nv (after rect.): {:?}", nv);
+        println!("v_slice (after rect.): {:?}", v_slice);
+
+        assert!(v_slice.len() == nv.len()+1, "v_slice.len() != nv.len()+1 (even after rectification)");
 
         // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
         let borrow = ub_is_lower(&u_slice, &v_slice);
@@ -221,6 +234,8 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
         else {
             ub_sub(u_slice, v_slice)
         };
+
+        println!("substraction: {:?}", sub);
 
         assert_eq!(sub.len(), n, "sub is not of length n");
 
