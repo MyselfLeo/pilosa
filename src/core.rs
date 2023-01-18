@@ -14,7 +14,8 @@ pub fn ub_is_lower(u: &Vec<u8>, v: &Vec<u8>) -> bool {
     if u.len() < v.len() {return true}
     if u.len() > v.len() {return false}
 
-    for (du, dv) in std::iter::zip(u, v) {
+
+    for (du, dv) in std::iter::zip(u, v).rev() {
         if du < dv {return true}
         if du > dv {return false}
     }
@@ -67,6 +68,8 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() == v.len()
     if u.len() != v.len() {panic!("Both unsigned big ints must have the same amount of digits")}
+
+    println!("performing {:?} - {:?}", u, v);
 
     // optimization
     if v == vec![0] {return u;}
@@ -196,7 +199,13 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
                 break 'do_while;
             }
         }
+
+
+
         
+
+
+
         let u_slice = nu[j..j+n+1].to_vec();
         let mut v_slice = ub_mul(nv.clone(), vec![q_est]);
 
@@ -207,16 +216,29 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
 
         assert!(v_slice.len() == nv.len()+1, "v_slice.len() != nv.len()+1 (even after rectification)");
 
-        // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
+        
+        println!("u_slice: {:?}", u_slice);
+        println!("v_slice: {:?}", v_slice);
+
         let borrow = ub_is_lower(&u_slice, &v_slice);
-        let mut sub = if borrow {
+
+        println!("borrow: {borrow}");
+
+        // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
+        let mut sub = if borrow {                           // u_slice - v_slice + 10^(n+1) <=> 10^(n+1) - (v_slice - u_slice)
             let mut ten_pow = vec![0u8; n+1]; // 10^(n+1)
             ten_pow.push(1);
 
-            ub_sub(ten_pow, ub_sub(v_slice, u_slice))
+
+            let lhs = ub_sub(v_slice, u_slice);
+
+            println!("ten_pow: {:?}", ten_pow);
+            println!("lhs: {:?}", lhs);
+
+            ub_sub(ten_pow, lhs)
         }
         else {
-            ub_sub(u_slice, v_slice)
+            ub_sub(u_slice, v_slice)                                 // u_slice - v_slice (>0)
         };
 
         assert!(sub.len() <= n, "sub is too long");
@@ -224,6 +246,12 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
         // assure that sub is the of length n
         while sub.len() < n {sub.push(0);}
 
+
+
+
+
+
+        
         // replace the values in nu by the values of sub (between j and j+n)
         for i in 0..n {
             nu[i+j] = sub[i];
@@ -241,6 +269,8 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
             slice.push(0);
             let add = ub_add(slice, nu[j..n+j+1].to_vec());
 
+            // add should be of length n+1, but we ignore the nth digit (created by a carry) as
+            // it cancels the borrow that occured before
             for i in 0..n {
                 nu[i+j] = add[i];
             }
