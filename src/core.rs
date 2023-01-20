@@ -66,10 +66,8 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// requires u >= v and u and v of the same size (panics otherwise)
 /// Based on the substraction algorithm in the Art of Computer Programming
 pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
-    // the algorithm requires that u.len() == v.len()
-    if u.len() != v.len() {panic!("Both unsigned big ints must have the same amount of digits")}
-
-    println!("performing {:?} - {:?}", u, v);
+    // the algorithm requires that u.len() == v.len()n
+    assert!(u.len() == v.len(), "Both unsigned big ints must have the same amount of digits");
 
     // optimization
     if v == vec![0] {return u;}
@@ -162,27 +160,19 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     // note that d < 10 (important for the end of the algorithm)
     let d = 9 / v[n-1];
 
-    println!("d: {d}");
-
     let mut nu = ub_mul(u, vec![d]);
     
     if nu.len() < n+m+1 {nu.push(0);}
 
-    println!("nu: {:?}", nu);
-
     let nv = ub_mul(v, vec![d]);
-
-    println!("nv: {:?}", nv);
 
 
     let mut q = vec![0u8; m+1];
 
-    assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
-    assert!(nv.len() == n, "nv is not n in length");
+    debug_assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
+    debug_assert!(nv.len() == n, "nv is not n in length");
 
-    assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
-
-    println!("m: {m}");
+    debug_assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
 
     for j in (0..m+1).rev() { // m -> 1
         
@@ -206,67 +196,43 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-        println!("q_est: {q_est}");
-
-
-
         let u_slice = nu[j..j+n+1].to_vec();
         let mut v_slice = ub_mul(nv.clone(), vec![q_est]);
 
-        assert!(v_slice.len() <= nv.len()+1, "v_slice.len() is > nv.len()+1");
+        debug_assert!(v_slice.len() <= nv.len()+1, "v_slice.len() is > nv.len()+1");
       
         // assure that v_slice is the same length as nv
         while v_slice.len() < nv.len()+1 {v_slice.push(0);}
 
-        assert!(v_slice.len() == nv.len()+1, "v_slice.len() != nv.len()+1 (even after rectification)");
-
-        
-        println!("u_slice: {:?}", u_slice);
-        println!("v_slice: {:?}", v_slice);
+        debug_assert!(v_slice.len() == nv.len()+1, "v_slice.len() != nv.len()+1 (even after rectification)");
 
         let borrow = ub_is_lower(&u_slice, &v_slice);
-
-        println!("borrow: {borrow}");
 
         // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
         let mut sub = if borrow {                           // u_slice - v_slice + 10^(n+1) <=> 10^(n+1) - (v_slice - u_slice)
             let mut ten_pow = vec![0u8; n+1]; // 10^(n+1)
             ten_pow.push(1);
 
-
             let lhs = ub_sub(v_slice, u_slice);
-
-            println!("ten_pow: {:?}", ten_pow);
-            println!("lhs: {:?}", lhs);
-
             ub_sub(ten_pow, lhs)
         }
         else {
             ub_sub(u_slice, v_slice)                                 // u_slice - v_slice (>0)
         };
 
-        assert!(sub.len() <= n, "sub is too long");
+        debug_assert!(sub.len() <= n, "sub is too long");
 
         // assure that sub is the of length n
         while sub.len() < n {sub.push(0);}
-
-        println!("sub: {:?}", sub);
-        println!("n: {n}");
-        println!("j: {j}");
-
-
-
-
-
-        println!("nu before: {:?}", nu);
+        
+        
         // replace the values in nu by the values of sub (between j and j+n)
         for i in 0..n {
             nu[i+j] = sub[i];
         }
-        println!("nu after: {:?}", nu);
 
         q[j] = q_est;
-        assert!(q[j] < 10, "q_est was not a digit");
+        debug_assert!(q[j] < 10, "q_est was not a digit");
 
         
         if borrow {
@@ -275,7 +241,6 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
             // todo: can be refactored as an in-place addition on nu
             let mut slice = nv.clone();
             slice.push(0);
-            println!("performing {:?} + {:?}", slice, nu[j..n+j+1].to_vec());
             let add = ub_add(slice, nu[j..n+j+1].to_vec());
 
             // add should be of length n+1, but we ignore the nth digit (created by a carry) as
@@ -294,7 +259,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     // unnormalize
     let (r, r0) = ub_shortdiv(nu, d);
 
-    assert!(r0 == 0, "I believe r0 should be 0 ????");
+    debug_assert!(r0 == 0, "I believe r0 should be 0 ????");
 
 
     // clean and return the results
