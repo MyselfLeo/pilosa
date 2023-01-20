@@ -172,6 +172,8 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
 
     let nv = ub_mul(v, vec![d]);
 
+    println!("nv: {:?}", nv);
+
 
     let mut q = vec![0u8; m+1];
 
@@ -179,6 +181,8 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
     assert!(nv.len() == n, "nv is not n in length");
 
     assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
+
+    println!("m: {m}");
 
     for j in (0..m+1).rev() { // m -> 1
         
@@ -202,7 +206,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
 
 
 
-        
+        println!("q_est: {q_est}");
 
 
 
@@ -246,16 +250,20 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
         // assure that sub is the of length n
         while sub.len() < n {sub.push(0);}
 
+        println!("sub: {:?}", sub);
+        println!("n: {n}");
+        println!("j: {j}");
 
 
 
 
 
-        
+        println!("nu before: {:?}", nu);
         // replace the values in nu by the values of sub (between j and j+n)
         for i in 0..n {
             nu[i+j] = sub[i];
         }
+        println!("nu after: {:?}", nu);
 
         q[j] = q_est;
         assert!(q[j] < 10, "q_est was not a digit");
@@ -267,6 +275,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
             // todo: can be refactored as an in-place addition on nu
             let mut slice = nv.clone();
             slice.push(0);
+            println!("performing {:?} + {:?}", slice, nu[j..n+j+1].to_vec());
             let add = ub_add(slice, nu[j..n+j+1].to_vec());
 
             // add should be of length n+1, but we ignore the nth digit (created by a carry) as
@@ -276,6 +285,10 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
             }
         }
     }
+
+
+    // resize nu so it is of size n
+    nu.resize(n, 0);
 
 
     // unnormalize
