@@ -156,13 +156,13 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
     let m = u.len() - n;
 
     assert!(n > 1, "n should be > 1");
+    assert!(v[n-1] != 0, "v[n-1] should not be 0");
 
     // normalisation so that nv[n-1] > b/2 in any case
+    // note that d < 10 (important for the end of the algorithm)
     let d = 9 / v[n-1];
 
     println!("d: {d}");
-
-    assert!(v[n-1] != 0, "v[n-1] should not be 0");
 
     let mut nu = ub_mul(u, vec![d]);
     
