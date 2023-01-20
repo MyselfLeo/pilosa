@@ -277,7 +277,6 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-// todo: algorithm for when n=1
 
 /// Compute the division of u by v, return the quotient q and the remainder r
 pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
