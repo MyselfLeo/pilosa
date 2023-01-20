@@ -151,7 +151,7 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 ///     and r = u mod v
 /// 
 /// Based on the division algorithm in the Art of Computer Programming
-pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
+pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     let n = v.len();
     let m = u.len() - n;
 
@@ -292,13 +292,14 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
 
 
     // unnormalize
-    //todo
+    let (r, r0) = ub_shortdiv(nu, d);
+
+    assert!(r0 == 0, "I believe r0 should be 0 ????");
 
 
     // clean and return the results
     ub_clean(&mut q);
-
-    (q, nu, d)
+    (q, r)
 }
 
 
@@ -309,4 +310,24 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>, u8) {
 
 
 
+
+
 // todo: algorithm for when n=1
+
+/// Compute the division of u by v, return the quotient q and the remainder r
+pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
+    let n = u.len();
+    let mut res = vec![0u8; n];
+
+
+    let mut r = 0u8;
+    for i in (0..n).rev() {
+        let x = r * 10 + u[i];
+
+        res[i] = x / v;
+        r = x % v;
+    }
+
+    ub_clean(&mut res);
+    (res, r)
+}
