@@ -12,8 +12,8 @@ use big_num::BigNum;
 
 
 fn main() {
-    let b1 = BigNum::from_string("1875649871641587948568765213546681").unwrap();
-    let b2 = BigNum::from_string("1564685").unwrap();
+    let b1 = BigNum::from_string("123456789123456789123456789").unwrap();
+    let b2 = BigNum::from_string("1992113").unwrap();
 
     println!("{}", BigNum::bn_div(&b1, &b2));
 }

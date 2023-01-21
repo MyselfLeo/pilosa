@@ -64,6 +64,7 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// Substract an unsigned big int u to an unsigned big int v
 /// (represented by vecs of u8, from least to most significant digit)
 /// requires u >= v and u and v of the same size (panics otherwise)
+/// returns a value of the same length
 /// Based on the substraction algorithm in the Art of Computer Programming
 pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() == v.len()n
@@ -85,7 +86,6 @@ pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
     if k != 0 {panic!("Expected u >= v")}
 
-    ub_clean(&mut w);
     w
 }
 
@@ -176,7 +176,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
     debug_assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
 
-    for j in (0..m+1).rev() { // m -> 1
+    for j in (0..m+1).rev() { // m -> 0
         
 
         // estimation of q (called q_est) and r (r_est)
@@ -198,8 +198,11 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-        let u_slice = nu[j..j+n+1].to_vec();
-        let mut v_slice = ub_mul(nv.clone(), vec![q_est]);
+
+
+        let u_slice = nu[j..j+n+1].to_vec();                        // u_slice will be of length n+1
+
+        let mut v_slice = ub_mul(nv.clone(), vec![q_est]);     // v_slice will be of length n+1 too (q_est * nv[0..n])
 
         debug_assert!(v_slice.len() <= nv.len()+1, "v_slice.len() is > nv.len()+1");
       
@@ -210,41 +213,36 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
         let borrow = ub_is_lower(&u_slice, &v_slice);
 
+        println!("n: {n}");
+        println!("u_slice: {:?}", u_slice);
+        println!("v_slice: {:?}", v_slice);
+
         // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
         let mut sub = if borrow {                           // u_slice - v_slice + 10^(n+1) <=> 10^(n+1) - (v_slice - u_slice)
+
             // ten_pow = 10^(n+1) (length n+2)
             let mut ten_pow = vec![0u8; n+1];
             ten_pow.push(1);
 
-            let mut lhs = ub_sub(v_slice, u_slice);
-
+            let mut lhs = ub_sub(v_slice, u_slice); // lhs.len() = n+1
+            lhs.push(0);                                          // lhs.len() = n+2
             
-
-            while lhs.len() < n+2 {lhs.push(0);}
 
             println!("ten_pow: {:?}", ten_pow);
             println!("lhs: {:?}", lhs);
 
-            let res = ub_sub(ten_pow, lhs);
-
-            println!("res: {:?}", res);
-            res
+            ub_sub(ten_pow, lhs)
         }
         else {
             ub_sub(u_slice, v_slice)                                 // u_slice - v_slice (>0)
         };
 
-        
+        println!("result: {:?}", sub);
 
-        debug_assert!(sub.len() <= n, "sub is too long");
-
-        // assure that sub is the of length n
-        while sub.len() < n {sub.push(0);}
-        
         
         // replace the values in nu by the values of sub (between j and j+n)
-        for i in 0..n {
-            nu[i+j] = sub[i];
+        for i in 0..n+1 {
+            nu[j+i] = sub[i];
         }
 
         q[j] = q_est;
@@ -271,10 +269,10 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     // resize nu so it is of size n
     nu.resize(n, 0);
 
-
+    
     // unnormalize
     let (r, r0) = ub_shortdiv(nu, d);
-
+    println!("r0: {r0}");
     debug_assert!(r0 == 0, "I believe r0 should be 0 ????");
 
 
