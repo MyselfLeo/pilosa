@@ -12,8 +12,8 @@ use big_num::BigNum;
 
 
 fn main() {
-    let b1 = vec![0, 0, 0, 0, 0, 1];
-    let b2 = vec![0, 3];
+    let b1 = BigNum::from_string("1875649871641587948568765213546681").unwrap();
+    let b2 = BigNum::from_string("1564685").unwrap();
 
-    println!("{:?}", core::ub_div(b1, b2));
+    println!("{}", BigNum::bn_div(&b1, &b2));
 }

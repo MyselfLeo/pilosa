@@ -5,6 +5,7 @@ use crate::core;
 
 
 const IMPLICIT_SIGN: bool  = false;
+const FLOAT_PRECISION: i64 = 5;
 
 
 
@@ -89,6 +90,8 @@ impl BigNum {
         if n1.power < n2.power {n1.with_power(n2.power)}
         else {n2.with_power(n1.power)}
     }
+
+
 
 
 
@@ -190,7 +193,7 @@ impl BigNum {
 
 
     /// Return the multiplication of 2 BigNums
-    pub fn mul(n1: &BigNum, n2: &BigNum) -> BigNum {
+    pub fn bn_mul(n1: &BigNum, n2: &BigNum) -> BigNum {
         let sign = n1.negative != n2.negative;
         let abs = core::ub_mul(n1.abs.clone(), n2.abs.clone());
         let pow = n1.power + n2.power;
@@ -269,7 +272,7 @@ impl BigNum {
 
 
     /// Add two BigNums
-    pub fn add(n1: &BigNum, n2: &BigNum) -> BigNum {
+    pub fn bn_add(n1: &BigNum, n2: &BigNum) -> BigNum {
         // Transform the addition in order to use inner_add (addition of same sign)
         // or inner_sub (substraction of positive BigNums)
         match (n1.negative, n2.negative) {
@@ -294,7 +297,7 @@ impl BigNum {
 
 
     /// Substract two BigNums
-    pub fn sub(n1: &BigNum, n2: &BigNum) -> BigNum {
+    pub fn bn_sub(n1: &BigNum, n2: &BigNum) -> BigNum {
         match (n1.negative, n2.negative) {
             (false, false) => {
                 if n1 < n2 {BigNum::inner_sub(n2, n1).opposite()} // require n1 > n2 :    (x-y) <=> -(y-x)
@@ -310,6 +313,41 @@ impl BigNum {
                 n1 + n2
             },
         }
+    }
+
+
+
+
+
+
+
+
+    /// Divide one BigNum by another
+    pub fn bn_div(n1: &BigNum, n2: &BigNum) -> BigNum {
+        let sign = n1.negative != n2.negative;
+        let pow = n1.power as i64 - n2.power as i64; // pow can be negative. If so it will be modified after the division
+
+        let mut n1 = n1.clone();
+        let n2 = n2.clone();
+
+        // increase the power of n1 so that n1.power - n2.power >= FLOAT_PRECISION
+        let delta = FLOAT_PRECISION - pow;
+        if delta > 0 {n1.with_power(n1.power + delta as u32);}
+
+
+        let quotient = if n2.abs.len() == 1 {
+            core::ub_shortdiv(n1.abs, n2.abs[0]).0
+        } else {
+            core::ub_div(n1.abs, n2.abs).0
+        };
+        
+        assert!(n1.power - n2.power > 0, "resulting power is negative");
+
+        // return the cleaned result
+        let mut res = BigNum { negative: sign, abs: quotient, power: n1.power - n2.power as u32};
+        res.clean();
+
+        res
     }
 
 
@@ -382,14 +420,14 @@ impl Add for &BigNum {
     type Output = BigNum;
 
     fn add(self, rhs: Self) -> Self::Output {
-        BigNum::add(self, rhs)
+        BigNum::bn_add(self, rhs)
     }
 }
 impl Add for BigNum {
     type Output = BigNum;
 
     fn add(self, rhs: Self) -> Self::Output {
-        BigNum::add(&self, &rhs)
+        BigNum::bn_add(&self, &rhs)
     }
 }
 
@@ -398,14 +436,14 @@ impl Sub for &BigNum {
     type Output = BigNum;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        BigNum::sub(self, rhs)
+        BigNum::bn_sub(self, rhs)
     }
 }
 impl Sub for BigNum {
     type Output = BigNum;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        BigNum::sub(&self, &rhs)
+        BigNum::bn_sub(&self, &rhs)
     }
 }
 
@@ -414,13 +452,13 @@ impl Mul for &BigNum {
     type Output = BigNum;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        BigNum::mul(self, rhs)
+        BigNum::bn_mul(self, rhs)
     }
 }
 impl Mul for BigNum {
     type Output = BigNum;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        BigNum::mul(&self, &rhs)
+        BigNum::bn_mul(&self, &rhs)
     }
 }

@@ -164,14 +164,16 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     
     if nu.len() < n+m+1 {nu.push(0);}
 
-    let nv = ub_mul(v, vec![d]);
+    let mut nv = ub_mul(v, vec![d]);
+    debug_assert!(nv.len() - n < 2, "nv len: {}, n: {n}", nv.len());
+
+    if nv.len() > n {nv.pop();}
+
 
 
     let mut q = vec![0u8; m+1];
 
     debug_assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
-    debug_assert!(nv.len() == n, "nv is not n in length");
-
     debug_assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
 
     for j in (0..m+1).rev() { // m -> 1
@@ -214,6 +216,8 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
             ten_pow.push(1);
 
             let lhs = ub_sub(v_slice, u_slice);
+            println!("lhs length: {}", lhs.len());
+            println!("n: {n}");
             ub_sub(ten_pow, lhs)
         }
         else {
