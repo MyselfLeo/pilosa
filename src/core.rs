@@ -212,17 +212,29 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
         // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
         let mut sub = if borrow {                           // u_slice - v_slice + 10^(n+1) <=> 10^(n+1) - (v_slice - u_slice)
-            let mut ten_pow = vec![0u8; n+1]; // 10^(n+1)
+            // ten_pow = 10^(n+1) (length n+2)
+            let mut ten_pow = vec![0u8; n+1];
             ten_pow.push(1);
 
-            let lhs = ub_sub(v_slice, u_slice);
-            println!("lhs length: {}", lhs.len());
-            println!("n: {n}");
-            ub_sub(ten_pow, lhs)
+            let mut lhs = ub_sub(v_slice, u_slice);
+
+            
+
+            while lhs.len() < n+2 {lhs.push(0);}
+
+            println!("ten_pow: {:?}", ten_pow);
+            println!("lhs: {:?}", lhs);
+
+            let res = ub_sub(ten_pow, lhs);
+
+            println!("res: {:?}", res);
+            res
         }
         else {
             ub_sub(u_slice, v_slice)                                 // u_slice - v_slice (>0)
         };
+
+        
 
         debug_assert!(sub.len() <= n, "sub is too long");
 
