@@ -224,6 +224,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
             let mut ten_pow = vec![0u8; n+1];
             ten_pow.push(1);
 
+            // lhs = v_slice - u_slice
             let mut lhs = ub_sub(v_slice, u_slice); // lhs.len() = n+1
             lhs.push(0);                                          // lhs.len() = n+2
             
@@ -237,7 +238,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
             ub_sub(u_slice, v_slice)                                 // u_slice - v_slice (>0)
         };
 
-        println!("result: {:?}", sub);
+        println!("sub: {:?}", sub);
 
         
         // replace the values in nu by the values of sub (between j and j+n)

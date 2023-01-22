@@ -5,7 +5,7 @@ use crate::core;
 
 
 const IMPLICIT_SIGN: bool  = false;
-const FLOAT_PRECISION: i64 = 5;
+const FLOAT_PRECISION: i64 = 10;
 
 
 
