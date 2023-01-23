@@ -184,6 +184,10 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(nv[nv.len() - 1] >= 5, "last digit of nv = {} < 5", nv[nv.len() - 1]);
 
 
+    println!("nu: {:?}", nu);
+    println!("nv: {:?}", nv);
+
+
 
     // the quotient did not change after the normalisation
     // only the remainder needs to be unnormalized
