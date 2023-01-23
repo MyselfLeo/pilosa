@@ -21,8 +21,8 @@ fn main() {
 
 
 fn main() {
-    let b1 = BigNum::from_string("189665189").unwrap();
-    let b2 = BigNum::from_string("564").unwrap();
+    let b1 = BigNum::from_string("2409853").unwrap();
+    let b2 = BigNum::from_string("240").unwrap();
 
     println!("{}", BigNum::bn_div(&b1, &b2));
 }
