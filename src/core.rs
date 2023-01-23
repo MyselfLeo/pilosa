@@ -142,6 +142,34 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
+/// Compute the division of u by v, return the quotient q and the remainder r
+/// Simpler division algorithm as v is only 1 digit
+pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
+    let n = u.len();
+    let mut res = vec![0u8; n];
+
+
+    let mut r = 0u8;
+    for i in (0..n).rev() {
+        let x = r * 10 + u[i];
+
+        res[i] = x / v;
+        r = x % v;
+    }
+
+    ub_clean(&mut res);
+    (res, r)
+}
+
+
+
+
+
+
+
+
+
+
 
 
 /// Perform the division of u / v (returns also u % v)
@@ -206,7 +234,10 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-// todo: remove the pub of this function
+
+
+
+
 
 /// Compute u / v and u % v
 /// 
@@ -215,7 +246,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 /// v.len() = n
 /// 
 /// v[n-1] > 5
-pub fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
 
@@ -358,20 +389,5 @@ pub fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-/// Compute the division of u by v, return the quotient q and the remainder r
-pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
-    let n = u.len();
-    let mut res = vec![0u8; n];
 
 
-    let mut r = 0u8;
-    for i in (0..n).rev() {
-        let x = r * 10 + u[i];
-
-        res[i] = x / v;
-        r = x % v;
-    }
-
-    ub_clean(&mut res);
-    (res, r)
-}
