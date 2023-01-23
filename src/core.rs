@@ -150,6 +150,9 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// 
 /// Based on the division algorithm in the Art of Computer Programming
 pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+
+    println!("dividing {:?} by {:?}", u, v);
+
     let n = v.len();
     let m = u.len() - n;
 
