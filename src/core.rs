@@ -173,6 +173,10 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     if nv.len() > n {nv.pop();}
 
 
+    println!("nu: {:?}", nu);
+    println!("nv: {:?}", nv);
+
+
 
     let mut q = vec![0u8; m+1];
 
