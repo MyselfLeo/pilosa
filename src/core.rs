@@ -141,53 +141,109 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
-/// u.len() = m+n
-/// v.len() = n
-/// both cleaned and n > 1
-/// 
-/// returns q = floor(u/v)
-///     and r = u mod v
-/// 
-/// Based on the division algorithm in the Art of Computer Programming
+
+
+
+/// Perform the division of u / v (returns also u % v)
 pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+    debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
+    debug_assert!(u.len() >= v.len(), "m can't be negative");
     let n = v.len();
-    let m = u.len() - n;
 
-    assert!(n > 1, "n should be > 1");
-    assert!(v[n-1] != 0, "v[n-1] should not be 0");
+    // v[n-1] must be < 5 to work with inner_div
+    // if it is not, we need to normalize the dividend and divisor so that v[n-1] >= 5
+    // we can later 
 
-    // normalisation so that nv[n-1] > b/2 in any case
-    // note that d < 10 (important for the end of the algorithm)
-    let d = 9 / v[n-1];
 
-    let mut nu = ub_mul(u, vec![d]);
+    // will be > 1 if normalisation is needed
+    let mut normaliser = 9 / v[n-1];
+
+    let mut nv = ub_mul(v.clone(), vec![normaliser]);
+
+    // we normalized too much (got one more digit), so we substract v to nv and 1 to normaliser
+    if nv.len() > n {
+        normaliser -= 1;
+        let mut rhs = v.clone();
+        rhs.push(0);
+        nv = ub_sub(nv, rhs);
+
+        // remove the last digit (which must be 0)
+        debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");
+
+        nv.pop();
+    }
+
+    // multiply nu by normaliser too
+    let mut nu = ub_mul(u, vec![normaliser]);
+
     
-    if nu.len() < n+m+1 {nu.push(0);}
 
-    let mut nv = ub_mul(v, vec![d]);
-    debug_assert!(nv.len() - n < 2, "nv len: {}, n: {n}", nv.len());
+    // inner_div requires that nu is AT LEAST one digit longer than nv
+    if nu.len() == nv.len() {nu.push(0);}
 
-    if nv.len() > n {nv.pop();}
-
+    debug_assert!(nv[nv.len() - 1] >= 5, "last digit of nv = {} < 5", nv[nv.len() - 1]);
 
 
+
+    // the quotient did not change after the normalisation
+    // only the remainder needs to be unnormalized
+    let (quotient, remainder) = inner_div(nu, nv);
+
+    let (remainder, r0) = ub_shortdiv(remainder, normaliser);
+
+    debug_assert!(r0 == 0, "r0 = {r0} != 0");
+
+   (quotient, remainder)
+}
+
+
+
+
+
+
+
+// todo: remove the pub of this function
+
+/// Compute u / v and u % v
+/// 
+/// Conditions:
+/// u.len() = m + n + 1
+/// v.len() = n
+/// 
+/// v[n-1] > 5
+pub fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+    debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
+    debug_assert!(u.len() >= v.len(), "m can't be negative");
+
+    let n = v.len();
+    let m = u.len() - n - 1;
+
+    debug_assert!(v[n-1] > 5, "v[n-1] should be > 5");
+
+    // clone u as it needs to be mutable
+    let mut u = u.clone();
+
+    // quotient that will be returned
     let mut q = vec![0u8; m+1];
 
-    debug_assert!(nu.len() == n+m+1, "nu is not n+m+1 in length");
-    debug_assert!(nv[n-1] != 0, "nv[n-1] should not be 0");
 
-    for j in (0..m+1).rev() { // m -> 0
-        
+    println!("n: {n}");
+    println!("m: {m}");
+
+
+
+
+    for j in (0..m+1).rev() { // j goes from m to 0 (included)
+        println!("Current j iteration: {j}");
 
         // estimation of q (called q_est) and r (r_est)
-        let mut q_est = (nu[j+n] * 10 + nu[j+n-1]) / nv[n-1];
-        let mut r_est = (nu[j+n] * 10 + nu[j+n-1]).rem_euclid(nv[n-1]);
+        let mut q_est = (u[j+n] * 10 + u[j+n-1]) / v[n-1];
+        let mut r_est = (u[j+n] * 10 + u[j+n-1]).rem_euclid(v[n-1]);
 
-        // i think i need a do-while here so pretend it's one
-        'do_while: loop {
-            if q_est == 10 || q_est * nv[n-2] > 10 * r_est + nu[j+n-2] {
+        'do_while: loop { // correct estimation of q_est (so q_est is not too large)
+            if q_est == 10 || q_est * v[n-2] > 10 * r_est + u[j+n-2] {
                 q_est -= 1;
-                r_est += nv[n-1];
+                r_est += v[n-1];
 
                 if r_est >= 10 {break 'do_while;}
             }
@@ -198,31 +254,37 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
+        // multiply and substract (hard part)
+        // from The Art of Computer Programming:
+        // "Replace (Uj+n Uj+n-1 ... Uj)b by (Uj+n Uj+n-1 ... Uj) - q_est(Vn-1 ... V1 V0)"
+        // if this substraction is negative, compute it's 10's complement (add to it 10^(n+1))
+        // and remember the borrowing that occured for later use
+        
+        let u_slice = u[j..j+n+1].to_vec();                          // (Uj+n Uj+n-1 ... Uj) of length n+1
+        let mut v_slice = ub_mul(v.clone(), vec![q_est]);       // q_est(Vn-1 ... V1 V0) of length n+1
+        v_slice.resize(n+1, 0); // the result of the ub_mul can be [0], so we resize to n+1
+
+        println!("u_slice: {:?} ({})", u_slice, u_slice.len());
+        println!("v_slice: {:?} ({})", v_slice, v_slice.len());
 
 
-        let u_slice = nu[j..j+n+1].to_vec();                        // u_slice will be of length n+1
-
-        let mut v_slice = ub_mul(nv.clone(), vec![q_est]);     // v_slice will be of length n+1 too (q_est * nv[0..n])
-
-        debug_assert!(v_slice.len() <= nv.len()+1, "v_slice.len() is > nv.len()+1");
-      
-        // assure that v_slice is the same length as nv
-        while v_slice.len() < nv.len()+1 {v_slice.push(0);}
-
-        debug_assert!(v_slice.len() == nv.len()+1, "v_slice.len() != nv.len()+1 (even after rectification)");
-
+        // wether we must borrow or not
         let borrow = ub_is_lower(&u_slice, &v_slice);
 
-        println!("n: {n}");
-        println!("u_slice: {:?}", u_slice);
-        println!("v_slice: {:?}", v_slice);
+        
+        let sub = if borrow {
 
-        // computes u_slice - v_slice (if u_slice >= v_slice) or u_slice - v_slice + 10^(n+1) (if u_slice < v_slice)
-        let mut sub = if borrow {                           // u_slice - v_slice + 10^(n+1) <=> 10^(n+1) - (v_slice - u_slice)
+            // u_slice < v_slice so u_slice - v_slice < 0
+            // we must compute u_slice - v_slice + 10^(n+1)
+            //
+            // => u_slice - v_slice + 10^(n+1)
+            // => -(v_slice - u_slice) + 10^(n+1)
+            // => 10^(n+1) - (v_slice - u_slice)
 
             // ten_pow = 10^(n+1) (length n+2)
             let mut ten_pow = vec![0u8; n+1];
             ten_pow.push(1);
+
 
             // lhs = v_slice - u_slice
             let mut lhs = ub_sub(v_slice, u_slice); // lhs.len() = n+1
@@ -232,55 +294,54 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
             println!("ten_pow: {:?}", ten_pow);
             println!("lhs: {:?}", lhs);
 
-            ub_sub(ten_pow, lhs)
+            // compute substraction
+            let mut sub = ub_sub(ten_pow, lhs);
+            debug_assert!(sub[n+1] == 0, "Sub is full n+2 in size (no good)");
+            sub.pop(); // remove last "0" that SHOULD be here if everything is ok
+
+            sub
         }
         else {
-            ub_sub(u_slice, v_slice)                                 // u_slice - v_slice (>0)
+            ub_sub(u_slice, v_slice) // length n+1
         };
+        debug_assert!(sub.len() == n+1, "sub is not n+1 in length ({:?})", sub);
 
-        println!("sub: {:?}", sub);
 
-        
-        // replace the values in nu by the values of sub (between j and j+n)
-        for i in 0..n+1 {
-            nu[j+i] = sub[i];
+        // replace the values in u by those in sub
+        for i in 0..n {
+            u[j+i] = sub[i];
         }
 
+        debug_assert!(q[j] < 10, "q_est is not a digit ({q_est})");
         q[j] = q_est;
-        debug_assert!(q[j] < 10, "q_est was not a digit");
 
         
+        // Add back after the borrow
         if borrow {
             q[j] -= 1;
 
             // todo: can be refactored as an in-place addition on nu
-            let mut slice = nv.clone();
+            let mut slice = v.clone();
             slice.push(0);
-            let add = ub_add(slice, nu[j..n+j+1].to_vec());
+            let add = ub_add(slice, u[j..n+j+1].to_vec());
 
             // add should be of length n+1, but we ignore the nth digit (created by a carry) as
             // it cancels the borrow that occured before
             for i in 0..n {
-                nu[i+j] = add[i];
+                u[i+j] = add[i];
             }
         }
     }
 
-
-    // resize nu so it is of size n
-    nu.resize(n, 0);
-
-    
-    // unnormalize
-    let (r, r0) = ub_shortdiv(nu, d);
-    println!("r0: {r0}");
-    debug_assert!(r0 == 0, "I believe r0 should be 0 ????");
-
+    // resize u so we only keep the nth first elements
+    u.resize(n, 0);
+    println!("final u: {:?}", u);
 
     // clean and return the results
     ub_clean(&mut q);
-    (q, r)
+    (q, u)
 }
+
 
 
 
