@@ -161,7 +161,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
     // normalisation so that nv[n-1] > b/2 in any case
     // note that d < 10 (important for the end of the algorithm)
-    let d = 9 / v[n-1];
+    let d = 8 / v[n-1];
 
     let mut nu = ub_mul(u, vec![d]);
     
