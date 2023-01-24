@@ -174,9 +174,16 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
 
 /// Perform the division of u / v (returns also u % v)
 pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+    println!("performing {:?} / {:?}", u, v);
+
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
+
+    let mut v = v.clone();
+
     let n = v.len();
+
+
 
     // v[n-1] must be < 5 to work with inner_div
     // if it is not, we need to normalize the dividend and divisor so that v[n-1] >= 5
