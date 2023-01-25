@@ -328,21 +328,22 @@ impl BigNum {
         let pow = n1.power as i64 - n2.power as i64; // pow can be negative. If so it will be modified after the division
 
 
-        // todo: make transformation so that n2 does not finish by 0
-        /*
+        let mut n1 = n1.clone();
+        let mut n2 = n2.clone();
+
+
+    // todo: make transformation so that n2 does not finish by 0
+    
         // v can't start by a 0. We remove every zeroes at the front (0025 > 25)
-    // and we remember this quantity.
-    let mut rectifying_power = 0;
-    while v[0] == 0 {
-        v.remove(0);
-        rectifying_power += 1;
-    }
+        // and we remember this quantity.
+        let mut rectifying_power = 0;
+        while n2.abs[0] == 0 {
+            n2.abs.remove(0);
+            rectifying_power += 1;
+        }
 
     // todo: continue rectifying */
 
-
-        let mut n1 = n1.clone();
-        let n2 = n2.clone();
 
         // increase the power of n1 so that n1.power - n2.power >= FLOAT_PRECISION
         let delta = FLOAT_PRECISION - pow;
