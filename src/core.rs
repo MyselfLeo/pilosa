@@ -1,5 +1,5 @@
 /// Clean useless zeroes of the big int
-fn ub_clean(ubint: &mut Vec<u8>) {
+pub fn ub_clean(ubint: &mut Vec<u8>) {
     while let Some(0) = ubint.last() {
         if ubint.len() > 1 {ubint.pop();}
         else {break}
@@ -201,6 +201,8 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         let mut rhs = v.clone();
         rhs.push(0);
         nv = ub_sub(nv, rhs);
+
+        println!("nv: {:?}", nv);
 
         // remove the last digit (which must be 0)
         debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");

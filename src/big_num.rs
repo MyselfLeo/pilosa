@@ -1,6 +1,6 @@
 use std::ops::{Add, Sub, Mul};
 
-use crate::core;
+use crate::core::{self, ub_clean};
 
 
 
@@ -66,7 +66,10 @@ impl BigNum {
 
         match abs {
             None => Err("Invalid format".to_string()),
-            Some(a) => Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32))
+            Some(mut a) => {
+                ub_clean(&mut a);
+                Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32))
+            }
         }
     }
 
