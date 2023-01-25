@@ -381,23 +381,18 @@ impl std::fmt::Display for BigNum {
         let nb_digits = self.abs.len(); 
         let mut dot_pos = nb_digits as isize - self.power as isize;
 
-        // leading zeroes if |self| < 1
+        // special case if |self| < 1
         if dot_pos <= 0 {
             write!(f, "0.")?;
             while dot_pos < 0 {
                 write!(f, "0")?;
                 dot_pos += 1;
             }
-            for i in 0..nb_digits {
-                write!(f, "{}", self.abs[nb_digits - i - 1])?;
-            };
         }
-        else {
-            for i in 0..nb_digits {
-                if i == dot_pos as usize {write!(f, ".")?};
-                write!(f, "{}", self.abs[nb_digits - i - 1])?;
-            };
-        }
+        for i in 0..nb_digits {
+            if i == dot_pos as usize && i > 0 {write!(f, ".")?};
+            write!(f, "{}", self.abs[nb_digits - i - 1])?;
+        };
 
         Ok(())
     }
