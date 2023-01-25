@@ -196,19 +196,18 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     let mut nv = ub_mul(v.clone(), vec![normaliser]);
 
     // we normalized too much (got one more digit), so we substract v to nv and 1 to normaliser
-    if nv.len() > n {
+    while nv.len() > n && nv.last() != Some(&0) {
         normaliser -= 1;
         let mut rhs = v.clone();
         rhs.push(0);
         nv = ub_sub(nv, rhs);
 
         println!("nv: {:?}", nv);
-
-        // remove the last digit (which must be 0)
-        debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");
-
-        nv.pop();
     }
+
+    // remove the last digit (which must be 0)
+    debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");
+    nv.pop();
 
     // multiply nu by normaliser too
     let mut nu = ub_mul(u, vec![normaliser]);
