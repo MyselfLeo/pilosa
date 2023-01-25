@@ -193,7 +193,11 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     // will be > 1 if normalisation is needed
     let mut normaliser = 9 / v[n-1];
 
+    println!("normaliser: {normaliser}");
+
     let mut nv = ub_mul(v.clone(), vec![normaliser]);
+
+    println!("nv: {:?}", nv);
 
     // we normalized too much (got one more digit), so we substract v to nv and 1 to normaliser
     while nv.len() > n && nv.last() != Some(&0) {
@@ -205,9 +209,11 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         println!("nv: {:?}", nv);
     }
 
-    // remove the last digit (which must be 0)
-    debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");
-    nv.pop();
+    // remove the last digit (which must be 0) if nv.len() > v.len()
+    if nv.len() > v.len() {
+        debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");
+        nv.pop();
+    }
 
     // multiply nu by normaliser too
     let mut nu = ub_mul(u, vec![normaliser]);
@@ -397,5 +403,17 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-
-
+/// If b is a power of ten, returns this power
+/// ex: [0, 0, 1] => 2 (because 100 = 10^2)
+/// Does not work if b is not cleaned
+pub fn is_power_of_ten(b: &Vec<u8>) -> Option<usize> {
+    match b.last()? {
+        1 => {
+            for d in &b[0..b.len()-1] {
+                if d != &0 {return None}
+            }
+            Some(b.len()-1)
+        },
+        _ => None
+    }
+}

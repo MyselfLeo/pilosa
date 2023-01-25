@@ -126,6 +126,7 @@ impl BigNum {
 
 
 
+
     /// Return the opposite of this BigNum
     pub fn opposite(&self) -> BigNum {
         BigNum { negative: !self.negative, abs: self.abs.clone(), power: self.power }
@@ -194,6 +195,38 @@ impl BigNum {
 
 
 
+    /// Return the BigNum multiplied by 10^power
+    pub fn bn_tenpow_mul(n: &BigNum, power: usize) -> BigNum {
+        // result values
+        let mut final_power = n.power;
+        let mut abs = n.abs.clone();
+
+
+        let mut power = power;
+        while power > 0 {
+            if final_power > 0 {final_power -= 1;}
+            else {abs.insert(0, 0);}
+            power -= 1;
+        }
+
+        let mut res = BigNum {negative: n.negative, abs: abs, power: final_power};
+        res.clean();
+        res
+    }
+
+
+
+    /// Return the BigNum divided by 10^power
+    pub fn bn_tenpow_div(n: &BigNum, power: usize) -> BigNum {
+        // very simple function as we only need to increase
+        // the n.power by power
+        let mut res = BigNum {negative: n.negative, abs: n.abs.clone(), power: n.power + power as u32};
+        res.clean();
+        res
+    }
+
+
+
 
     /// Return the multiplication of 2 BigNums
     pub fn bn_mul(n1: &BigNum, n2: &BigNum) -> BigNum {
@@ -206,6 +239,7 @@ impl BigNum {
         res.clean();
         res
     }
+
 
 
 
