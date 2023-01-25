@@ -23,6 +23,10 @@ fn main() {
         exit(1);
     }
 
+    println!("received: \"{}\"", args[1]);
+    println!("          \"{}\"", args[2]);
+
+
     let b1 = BigNum::from_string(&args[1]).unwrap();
     let b2 = BigNum::from_string(&args[2]).unwrap();
 
