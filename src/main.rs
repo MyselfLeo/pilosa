@@ -10,16 +10,11 @@ use std::process::exit;
 
 
 
-fn main() {
-    let b1 =  BigNum::from_string("208752").unwrap();
-    println!("{}", BigNum::bn_tenpow_div(&b1, 5));
-}
 
 
 
 
 
-/*
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -32,4 +27,4 @@ fn main() {
     let b2 = BigNum::from_string(&args[2]).unwrap();
 
     println!("{}", BigNum::bn_div(&b1, &b2));
-}*/
+}

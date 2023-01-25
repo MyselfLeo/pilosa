@@ -194,6 +194,13 @@ impl BigNum {
     }
 
 
+    /// If n is a power of ten, return x so that n = 10^x
+    pub fn is_power_of_ten(&self) -> Option<isize> {
+        let abs_power = core::is_power_of_ten(&self.abs)?;
+        Some(abs_power as isize - self.power as isize)
+    }
+
+
 
     /// Return the BigNum multiplied by 10^power
     pub fn bn_tenpow_mul(n: &BigNum, power: usize) -> BigNum {
@@ -217,7 +224,7 @@ impl BigNum {
 
 
     /// Return the BigNum divided by 10^power
-    pub fn bn_tenpow_div(n: &BigNum, power: usize) -> BigNum {
+    pub fn bn_tenpow_div(n: &BigNum, power: isize) -> BigNum {
         // very simple function as we only need to increase
         // the n.power by power
         let mut res = BigNum {negative: n.negative, abs: n.abs.clone(), power: n.power + power as u32};
@@ -230,6 +237,9 @@ impl BigNum {
 
     /// Return the multiplication of 2 BigNums
     pub fn bn_mul(n1: &BigNum, n2: &BigNum) -> BigNum {
+        // Maybe we could check if n2 is a power of ten to use bn_tenpow_mul here
+        // i don't know if it is worth it
+
         let sign = n1.negative != n2.negative;
         let abs = core::ub_mul(n1.abs.clone(), n2.abs.clone());
         let pow = n1.power + n2.power;
@@ -361,6 +371,14 @@ impl BigNum {
 
     /// Divide one BigNum by another
     pub fn bn_div(n1: &BigNum, n2: &BigNum) -> BigNum {
+        // checking if n2 is a power of ten
+        // really worth it (compared to bn_mul) as it could prevent precision lost
+        // (the normal algorithm would return 10 / 100 = 0.0999999999)
+        match n2.is_power_of_ten() {
+            Some(p) => return BigNum::bn_tenpow_div(n1, p),
+            None => ()
+        };
+
         let sign = n1.negative != n2.negative;
         let pow = n1.power as i64 - n2.power as i64; // pow can be negative. If so it will be modified after the division
 
