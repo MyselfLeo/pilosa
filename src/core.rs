@@ -179,7 +179,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
 
-    let mut v = v.clone();
+    let v = v.clone();
 
     let n = v.len();
 
