@@ -4,7 +4,7 @@ mod core;
 use big_num::BigNum;
 
 
-use std::env;
+use std::{env, process::exit};
 
 
 
@@ -17,6 +17,11 @@ use std::env;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+
+    if args.len() < 2 {
+        println!("Error: requires 2 numbers");
+        exit(1);
+    }
 
     let b1 = BigNum::from_string(&args[1]).unwrap();
     let b2 = BigNum::from_string(&args[2]).unwrap();
