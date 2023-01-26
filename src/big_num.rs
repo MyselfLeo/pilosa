@@ -5,7 +5,7 @@ use crate::core::{self, ub_clean};
 
 
 const IMPLICIT_SIGN: bool  = false;
-const FLOAT_PRECISION: i64 = 10;
+const FLOAT_PRECISION: i64 = 15;
 
 
 
@@ -393,19 +393,12 @@ impl BigNum {
         if delta > 0 {n1.with_power(n1.power + delta as u32);}
 
 
-        let (mut quotient, rest) = if n2.abs.len() == 1 {
+        let (quotient, _) = if n2.abs.len() == 1 {
             let (q, r) = core::ub_shortdiv(n1.abs, n2.abs[0]);
             (q, vec![r])
         } else {
             core::ub_div(n1.abs, n2.abs)
         };
-
-        // depending on the most significant digit of rest, we can increase the result by 1 for correct rounding
-        if let Some(x) = rest.last() {
-            if x >= &5 {
-                quotient = core::ub_add(quotient, vec![1]);
-            }
-        }
         
         assert!(n1.power - n2.power > 0, "resulting power is negative");
 

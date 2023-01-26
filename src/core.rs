@@ -174,7 +174,7 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
 
 /// Perform the division of u / v (returns also u % v)
 pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
-    println!("performing {:?} / {:?}", u, v);
+
 
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
@@ -193,11 +193,11 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     // will be > 1 if normalisation is needed
     let mut normaliser = 9 / v[n-1];
 
-    println!("normaliser: {normaliser}");
+
 
     let mut nv = ub_mul(v.clone(), vec![normaliser]);
 
-    println!("nv: {:?}", nv);
+
 
     // we normalized too much (got one more digit), so we substract v to nv and 1 to normaliser
     while nv.len() > n && nv.last() != Some(&0) {
@@ -206,7 +206,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         rhs.push(0);
         nv = ub_sub(nv, rhs);
 
-        println!("nv: {:?}", nv);
+
     }
 
     // remove the last digit (which must be 0) if nv.len() > v.len()
@@ -226,8 +226,8 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(nv[nv.len() - 1] >= 5, "last digit of nv = {} < 5", nv[nv.len() - 1]);
 
 
-    println!("nu: {:?}", nu);
-    println!("nv: {:?}", nv);
+
+
 
 
 
@@ -276,14 +276,14 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     let mut q = vec![0u8; m+1];
 
 
-    println!("n: {n}");
-    println!("m: {m}");
+
+
 
 
 
 
     for j in (0..m+1).rev() { // j goes from m to 0 (included)
-        println!("Current j iteration: {j}");
+
 
         // estimation of q (called q_est) and r (r_est)
         let mut q_est = (u[j+n] * 10 + u[j+n-1]) / v[n-1];
@@ -313,8 +313,8 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         let mut v_slice = ub_mul(v.clone(), vec![q_est]);       // q_est(Vn-1 ... V1 V0) of length n+1
         v_slice.resize(n+1, 0); // the result of the ub_mul can be [0], so we resize to n+1
 
-        println!("u_slice: {:?} ({})", u_slice, u_slice.len());
-        println!("v_slice: {:?} ({})", v_slice, v_slice.len());
+
+
 
 
         // wether we must borrow or not
@@ -340,8 +340,8 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
             lhs.push(0);                                          // lhs.len() = n+2
             
 
-            println!("ten_pow: {:?}", ten_pow);
-            println!("lhs: {:?}", lhs);
+
+
 
             // compute substraction
             let mut sub = ub_sub(ten_pow, lhs);
@@ -384,7 +384,7 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
     // resize u so we only keep the nth first elements
     u.resize(n, 0);
-    println!("final u: {:?}", u);
+
 
     // clean and return the results
     ub_clean(&mut q);
