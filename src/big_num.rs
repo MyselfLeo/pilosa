@@ -400,7 +400,7 @@ impl BigNum {
             core::ub_div(n1.abs, n2.abs)
         };
         
-        assert!(n1.power - n2.power > 0, "resulting power is negative");
+        debug_assert!(n1.power - n2.power > 0, "resulting power is negative");
 
         // return the cleaned result
         let mut res = BigNum { negative: sign, abs: quotient, power: n1.power - n2.power as u32};
