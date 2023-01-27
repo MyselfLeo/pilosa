@@ -62,7 +62,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sloth-num"
+name = "sloth_num"
 version = "0.1.0"
 dependencies = [
  "rand",

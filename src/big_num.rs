@@ -33,9 +33,7 @@ impl BigNum {
     /// # Examples
     ///
     /// ```
-    /// // You can have rust code between fences inside the comments
-    /// // If you pass --test to `rustdoc`, it will even test it for you!
-    /// use doc::Person;
+    /// use sloth_num::BigNum;
     /// let person = Person::new("name");
     /// ```
     fn new(negative: bool, abs: Vec<u8>, power: u32) -> BigNum {
