@@ -8,17 +8,36 @@ const IMPLICIT_SIGN: bool  = false;
 const FLOAT_PRECISION: i64 = 15;
 
 
-
+/// Represents an arbitrary long/precise decimal number
 #[derive(Clone, Debug)]
-pub struct BigNum { // todo: remove pub
-    pub negative: bool,
-    pub abs: Vec<u8>,
-    pub power: u32
+pub struct BigNum {
+    negative: bool,
+    abs: Vec<u8>,
+    power: u32
 }
 
 
 
 impl BigNum {
+    
+    /// Returns a new BigNum, cleaned (i.e with no useless zeroes) with the given values.
+    /// Note: The validity of the arguments will not be tested. For example, `abs` could
+    /// hold a value that is not a digit.
+    ///
+    /// # Arguments
+    ///
+    /// * `negative` - A bool representing whether the number is negative or not
+    /// * `abs` - A Vec of digits in base 10, representing the digits of the number, from least to most significant
+    /// * `power` - How much the dot is offsided (to the left) from the least significant number
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // You can have rust code between fences inside the comments
+    /// // If you pass --test to `rustdoc`, it will even test it for you!
+    /// use doc::Person;
+    /// let person = Person::new("name");
+    /// ```
     fn new(negative: bool, abs: Vec<u8>, power: u32) -> BigNum {
         let mut res = BigNum {negative, abs, power};
         res.clean();
