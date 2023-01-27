@@ -1,4 +1,4 @@
-mod big_num;
+pub mod big_num;
 mod core;
 
 use big_num::BigNum;

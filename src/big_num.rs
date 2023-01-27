@@ -34,15 +34,24 @@ impl BigNum {
     ///
     /// ```
     /// use sloth_num::BigNum;
-    /// let person = Person::new("name");
+    /// let number = BigNum::new(false, vec![1, 2, 3, 4], 2).unwrap();      // +43.21
+    /// let number = BigNum::new(true, vec![0, 0, 0, 0, 0, 1], 5).unwrap(); // 0.00001
+    /// let number = BigNum::new(false, vec![], 0).unwrap();                // 0
     /// ```
-    fn new(negative: bool, abs: Vec<u8>, power: u32) -> BigNum {
+    pub fn new(negative: bool, abs: Vec<u8>, power: u32) -> Result<BigNum, String> {
+        // check the validity of abs
+        for d in &abs {
+            if *d > 9 {return Err(format!("abs contains a value that is not a Digit ({})", d));}
+        }
+
         let mut res = BigNum {negative, abs, power};
         res.clean();
-        res
+        Ok(res)
     }
     
-    pub fn zero() -> BigNum {BigNum {negative: false, abs: vec![0], power: 0}}
+    /// Return a BigNum representing zero (0)
+    pub fn zero() -> BigNum {BigNum {negative: false, abs: vec![], power: 0}}
+    /// Return a BigNum representing one (1)
     pub fn one() -> BigNum {BigNum {negative: false, abs: vec![1], power: 0}}
 
 
@@ -85,7 +94,7 @@ impl BigNum {
             None => Err("Invalid format".to_string()),
             Some(mut a) => {
                 ub_clean(&mut a);
-                Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32))
+                Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32).unwrap())
             }
         }
     }
@@ -93,10 +102,39 @@ impl BigNum {
 
 
 
-
+    /// Returns a BigNum from a i32
+    /// The function simply convert the i32 into a string, then calls `BigNum::from_string()`
+    /// 
+    /// # Arguments
+    /// 
+    /// * `n` - the number to convert into a BigNum
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// use sloth_num::BigNum;
+    /// let number = BigNum::from_i32(134).unwrap();
+    /// let number = BigNum::from_i32(0).unwrap();
+    /// let number = BigNum::from_i32(-242952842).unwrap();
+    /// ```
     pub fn from_i32(n: i32) -> Result<BigNum, String> {
         BigNum::from_string(&n.to_string())
     }
+    /// Returns a BigNum from a f64
+    /// The function simply convert the f64 into a string, then calls `BigNum::from_string()`
+    /// 
+    /// # Arguments
+    /// 
+    /// * `n` - the number to convert into a BigNum
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// use sloth_num::BigNum;
+    /// let number = BigNum::from_f64(134.2452).unwrap();
+    /// let number = BigNum::from_f64(0.0).unwrap();
+    /// let number = BigNum::from_f64(-2.4249252952842).unwrap();
+    /// ```
     pub fn from_f64(n: f64) -> Result<BigNum, String> {
         BigNum::from_string(&n.to_string())
     }
@@ -324,7 +362,7 @@ impl BigNum {
 
         BigNum::same_power(&mut n1, &mut n2);
 
-        let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs), n1.power);
+        let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs), n1.power).unwrap();
 
         res.clean();
         res
