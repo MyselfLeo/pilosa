@@ -56,8 +56,22 @@ impl BigNum {
 
 
 
-    /// Takes a number as a string (ex: -512.3245)
-    /// and return the corresponding BigNum
+    /// Returns a new BigNum, cleaned, from the given string.
+    /// Can fail if the string is not properly formatted.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `origin_string` - A string representing a number. Examples of the format is given below (common format for numbers).
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// let number = BigNum::from_string("3536").unwrap();
+    /// let number = BigNum::from_string("0").unwrap();
+    /// let number = BigNum::from_string("+24895.25243").unwrap();
+    /// let number = BigNum::from_string("-0.00243").unwrap();
+    /// ```
     pub fn from_string(origin_string: &str) -> Result<BigNum, String> {
         let mut string = origin_string.replace(" ", "");
         if string.is_empty() {return Err("Empty string".to_string())}
