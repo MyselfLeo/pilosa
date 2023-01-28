@@ -1,4 +1,4 @@
-//! # Sloth-num
+//! # SlothNum
 //! 
 //! The big number library created for and used by the programming language [Sloth](https://crates.io/crates/slothlang).
 

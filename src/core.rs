@@ -1,3 +1,8 @@
+//! Algorithms for common operations on unsigned big ints.
+//! Those functions are used by the BigNum struct to represent and manipulate
+//! arbitrary long/precise numbers.
+
+
 /// Clean the unsigned big int (vec of digits from least to most significant) by removing useless zeroes
 /// 
 /// # Arguments
