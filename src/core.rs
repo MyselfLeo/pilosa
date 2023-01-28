@@ -1,4 +1,21 @@
-/// Clean useless zeroes of the big int
+/// Clean the unsigned big int (vec of digits from least to most significant) by removing useless zeroes
+/// 
+/// # Arguments
+/// 
+/// * `ubint` - the unsigned big int
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// let mut number = vec![0, 2, 4, 9, 6, 0, 0]; // 0069420
+/// core::ub_clean(&mut number);                // -> 69420
+/// 
+/// let mut number = vec![];                    // works with empty UBI
+/// core::ub_clean(&mut number);
+/// 
+/// ```
 pub fn ub_clean(ubint: &mut Vec<u8>) {
     while let Some(0) = ubint.last() {
         if ubint.len() > 1 {ubint.pop();}
@@ -9,7 +26,27 @@ pub fn ub_clean(ubint: &mut Vec<u8>) {
 
 
 
-/// Return true if u < v
+
+
+/// Return true if u < v. Only works if both numbers are cleaned.
+/// 
+/// # Arguments
+/// 
+/// * `u` & `v` - unsigned big ints (a Vec of digits, from least to most significant)
+/// 
+/// # Examples
+/// ```
+/// use sloth_num::core;
+/// 
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3];        // 364
+/// let n3 = vec![0, 4, 1, 5];     // 5140
+/// let n4 = vec![];               // 0 (`vec![0] works too`)
+/// 
+/// assert_eq!(core::ub_is_lower(&n1, &n2), false);
+/// assert_eq!(core::ub_is_lower(&n1, &n3), true);
+/// assert_eq!(core::ub_is_lower(&n4, &n2), true);
+/// ```
 pub fn ub_is_lower(u: &Vec<u8>, v: &Vec<u8>) -> bool {
     if u.len() < v.len() {return true}
     if u.len() > v.len() {return false}
@@ -22,6 +59,8 @@ pub fn ub_is_lower(u: &Vec<u8>, v: &Vec<u8>) -> bool {
 
     false
 }
+
+
 
 
 
