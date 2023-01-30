@@ -4,6 +4,7 @@
 
 
 /// Clean the unsigned big int (vec of digits from least to most significant) by removing useless zeroes
+/// Will keep one zero if it is already here (ex: vec![0, 0, 0] -> vec![0])
 /// 
 /// # Arguments
 /// 
@@ -28,29 +29,34 @@ pub fn ub_clean(ubint: &mut Vec<u8>) {
     }
 }
 
-/// Return a cleaned version of the unsigned big int 
+/// Return a cleaned version of the unsigned big int by removing useless zeroes.  
+/// Will keep one zero if it is already here (ex: `vec![0, 0, 0] -> vec![0]`)
 /// 
 /// # Arguments
 /// 
-/// * `ubint` - the unsigned big int
+/// * `ubint` - the unsigned big int (vec of digits from least to most significant)
 /// 
 /// # Examples
 /// 
 /// ```
 /// use sloth_num::core;
 /// 
-/// let mut number = vec![0, 2, 4, 9, 6, 0, 0]; // 0069420
-/// core::ub_clean(&mut number);                // -> 69420
+/// let mut number = vec![0, 2, 4, 9, 6, 0, 0];                 // 0069420
+/// assert_eq!(core::ub_cleaned(number), vec![0, 2, 4, 9, 6]);  // -> 69420
 /// 
-/// let mut number = vec![];                    // works with empty UBI
-/// core::ub_clean(&mut number);
+/// // works with empty UBI
+/// let mut number = vec![];
+/// assert_eq!(core::ub_cleaned(number), vec![]); 
 /// 
 /// ```
-pub fn ub_clean(ubint: &mut Vec<u8>) {
-    while let Some(0) = ubint.last() {
-        if ubint.len() > 1 {ubint.pop();}
+pub fn ub_cleaned(ubint: Vec<u8>) -> Vec<u8> {
+    let mut res = ubint.clone();
+    while let Some(0) = res.last() {
+        if res.len() > 1 {res.pop();}
         else {break}
-    }
+    };
+
+    res
 }
 
 
