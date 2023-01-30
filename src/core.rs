@@ -28,6 +28,31 @@ pub fn ub_clean(ubint: &mut Vec<u8>) {
     }
 }
 
+/// Return a cleaned version of the unsigned big int 
+/// 
+/// # Arguments
+/// 
+/// * `ubint` - the unsigned big int
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// let mut number = vec![0, 2, 4, 9, 6, 0, 0]; // 0069420
+/// core::ub_clean(&mut number);                // -> 69420
+/// 
+/// let mut number = vec![];                    // works with empty UBI
+/// core::ub_clean(&mut number);
+/// 
+/// ```
+pub fn ub_clean(ubint: &mut Vec<u8>) {
+    while let Some(0) = ubint.last() {
+        if ubint.len() > 1 {ubint.pop();}
+        else {break}
+    }
+}
+
 
 
 
@@ -71,14 +96,34 @@ pub fn ub_is_lower(u: &Vec<u8>, v: &Vec<u8>) -> bool {
 
 
 
-/// Add 2 unsigned big ints u and v
-/// (represented by vecs of u8, from least to most significant digit)
+/// Return the (cleaned) sum of the 2 unsigned big int u and v.
+/// Requires that u >= v
+/// 
+/// # Arguments
+/// 
+/// * `u` & `v` - unsigned big ints (a Vec of digits, from least to most significant)
+/// 
+/// # Examples
+/// ```
+/// use sloth_num::core;
+/// 
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3];        // 364
+/// let n3 = vec![0, 0, 1, 0];     // 100
+/// let n4 = vec![0];              // 0
+/// 
+/// assert_eq!(core::ub_add(n1, n2), vec![7, 2, 1, 3]); // 2763 + 364 = 3127
+/// assert_eq!(core::ub_add(n3, n4), vec![0, 0, 1]);    // 100
+/// ```
 pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() >= v.len()
     if u.len() < v.len() {return ub_add(v, u)}
 
     // various optimization
-    if u == vec![0] {return v;}
+    if u == vec![0] {
+        
+        return v;
+    }
     if v == vec![0] {return u;}
 
     let m = u.len();
