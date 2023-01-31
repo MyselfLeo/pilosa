@@ -196,7 +196,8 @@ impl BigNum {
     }
 
     
-    /// Increase the power of the BigNum to the required value, add zeroes to match
+
+    /// Increase the power of the BigNum to the required value, adding zeroes to match
     fn with_power(&mut self, n: u32) {
         if self.power >= n {return;}
 
@@ -209,8 +210,26 @@ impl BigNum {
 
 
 
-    /// Return the opposite of this BigNum
+    /// Return the opposite of this BigNum  
+    /// Will have no effect on 0 (we prevent -0 from being represented)
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// let n1 = BigNum::from_string("-245.242").unwrap();
+    /// let n2 = BigNum::zero();
+    /// 
+    /// assert_eq!(n1.opposite(), BigNum::from_string("245.242").unwrap());
+    /// assert_eq!(n2.opposite(), BigNum::zero());
+    /// ```
     pub fn opposite(&self) -> BigNum {
+        // Prevent the creation of -0.
+        // we consider that self can't be -0 at the beginning
+        if self.abs == vec![] || self.abs == vec![0] {
+            return self.clone();
+        }
+
         BigNum { negative: !self.negative, abs: self.abs.clone(), power: self.power }
     }
 
@@ -277,6 +296,20 @@ impl BigNum {
 
 
     /// If n is a power of ten, return x so that n = 10^x
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("100").unwrap();
+    /// let n2 = BigNum::from_string("101").unwrap();
+    /// let n3 = BigNum::from_string("1").unwrap();
+    /// 
+    /// assert_eq!(n1.is_power_of_ten(), Some(2));
+    /// assert_eq!(n2.is_power_of_ten(), None);
+    /// assert_eq!(n3.is_power_of_ten(), Some(0));
+    /// ```
     pub fn is_power_of_ten(&self) -> Option<isize> {
         let abs_power = core::is_power_of_ten(&self.abs)?;
         Some(abs_power as isize - self.power as isize)
@@ -284,11 +317,27 @@ impl BigNum {
 
 
 
-    /// Return the BigNum multiplied by 10^power
-    pub fn bn_tenpow_mul(n: &BigNum, power: usize) -> BigNum {
+    /// Return the BigNum multiplied by 10^power  
+    /// This is quicker than using the basic multiplication algorithm
+    /// as it's only a matter of adding or removing zeroes in the inner representation.
+    /// 
+    /// # Arguments
+    /// * `power` - A number so that BigNum is multiplied by 10^power
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// let n1 = BigNum::from_string("123").unwrap();
+    /// let n2 = BigNum::from_string("0.02423").unwrap();
+    /// 
+    /// assert_eq!(n1.bn_tenpow_mul(2), BigNum::from_string("12300").unwrap());
+    /// assert_eq!(n2.bn_tenpow_mul(3), BigNum::from_string("24.23").unwrap());
+    /// ```
+    pub fn bn_tenpow_mul(self, power: usize) -> BigNum {
         // result values
-        let mut final_power = n.power;
-        let mut abs = n.abs.clone();
+        let mut final_power = self.power;
+        let mut abs = self.abs.clone();
 
 
         let mut power = power;
@@ -298,7 +347,7 @@ impl BigNum {
             power -= 1;
         }
 
-        let mut res = BigNum {negative: n.negative, abs: abs, power: final_power};
+        let mut res = BigNum {negative: self.negative, abs: abs, power: final_power};
         res.clean();
         res
     }
