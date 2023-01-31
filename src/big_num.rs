@@ -34,6 +34,7 @@ impl BigNum {
     ///
     /// ```
     /// use sloth_num::BigNum;
+    /// 
     /// let number = BigNum::new(false, vec![1, 2, 3, 4], 2).unwrap();      // +43.21
     /// let number = BigNum::new(true, vec![0, 0, 0, 0, 0, 1], 5).unwrap(); // 0.00001
     /// let number = BigNum::new(false, vec![], 0).unwrap();                // 0
@@ -71,6 +72,7 @@ impl BigNum {
     /// 
     /// ```
     /// use sloth_num::BigNum;
+    /// 
     /// let number = BigNum::from_string("3536").unwrap();
     /// let number = BigNum::from_string("0").unwrap();
     /// let number = BigNum::from_string("+24895.25243").unwrap();
@@ -131,6 +133,7 @@ impl BigNum {
     ///
     /// ```
     /// use sloth_num::BigNum;
+    /// 
     /// let number = BigNum::from_i32(134).unwrap();
     /// let number = BigNum::from_i32(0).unwrap();
     /// let number = BigNum::from_i32(-242952842).unwrap();
@@ -149,6 +152,7 @@ impl BigNum {
     ///
     /// ```
     /// use sloth_num::BigNum;
+    /// 
     /// let number = BigNum::from_f64(134.2452).unwrap();
     /// let number = BigNum::from_f64(0.0).unwrap();
     /// let number = BigNum::from_f64(-2.4249252952842).unwrap();
@@ -217,6 +221,7 @@ impl BigNum {
     /// 
     /// ```
     /// use sloth_num::BigNum;
+    /// 
     /// let n1 = BigNum::from_string("-245.242").unwrap();
     /// let n2 = BigNum::zero();
     /// 
@@ -328,6 +333,7 @@ impl BigNum {
     /// 
     /// ```
     /// use sloth_num::BigNum;
+    /// 
     /// let n1 = BigNum::from_string("123").unwrap();
     /// let n2 = BigNum::from_string("0.02423").unwrap();
     /// 
