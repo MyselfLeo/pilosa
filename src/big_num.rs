@@ -242,7 +242,6 @@ impl BigNum {
 
     /// Return true if n1 == n2
     /// Will not work if both BigNums are not cleaned
-    /// => BigNums MUST be cleaned after each operation
     fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
         n1.negative == n2.negative && n1.abs == n2.abs && n1.power == n2.power
     }
@@ -506,13 +505,37 @@ impl BigNum {
 
 
 
-    /// Divide one BigNum by another
-    pub fn bn_div(n1: &BigNum, n2: &BigNum) -> BigNum {
+    /// Divide one BigNum by another.  
+    /// The result will have a maximum precision of FLOAT_PRECISION digits after the dot. If the result is not perfect (ex: non-decimal values), the result
+    /// will be NOT be rounded, so the actual precision will be +- 10^(-FLOAT_PRECISION)
+    /// 
+    /// # Arguments
+    /// * `n1` - a BigNum
+    /// * `n2` - a BigNum. Must not be zero or the operation results in an error.
+    ///
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("1224.235").unwrap();
+    /// let n2 = BigNum::from_string("12").unwrap();
+    /// let n3 = BigNum::from_string("0").unwrap();
+    /// 
+    /// assert_eq!(BigNum::bn_div(&n1, &n2), Ok(BigNum::from_string("102.019583333333333").unwrap()));
+    /// assert!(BigNum::bn_div(&n1, &n3).is_err());
+    /// ```
+    pub fn bn_div(n1: &BigNum, n2: &BigNum) -> Result<BigNum, String> {
+        // prevent zero division
+        if n2.abs == vec![] || n2.abs == vec![0] {
+            return Err("Division by zero".to_string());
+        }
+
         // checking if n2 is a power of ten
         // really worth it (compared to bn_mul) as it could prevent precision lost
         // (the normal algorithm would return 10 / 100 = 0.0999999999)
         match n2.is_power_of_ten() {
-            Some(p) => return BigNum::bn_tenpow_div(n1, p),
+            Some(p) => return Ok(BigNum::bn_tenpow_div(n1, p)),
             None => ()
         };
 
@@ -543,11 +566,15 @@ impl BigNum {
         let mut res = BigNum { negative: sign, abs: quotient, power: n1.power - n2.power as u32};
         res.clean();
 
-        res
+        Ok(res)
     }
 
 
 }
+
+
+
+
 
 
 
@@ -575,6 +602,8 @@ impl std::fmt::Display for BigNum {
         Ok(())
     }
 }
+
+
 
 
 

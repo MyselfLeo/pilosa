@@ -2,10 +2,8 @@ pub mod big_num;
 mod core;
 
 use big_num::BigNum;
+use crate::core::ub_div;
 
-
-use std::env;
-use std::process::exit;
 
 
 
@@ -16,16 +14,11 @@ use std::process::exit;
 
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
 
-    if args.len() < 2 {
-        println!("Error: requires 2 numbers");
-        exit(1);
-    }
+    let n1 = BigNum::from_string("1224.235").unwrap();
+    let n2 = BigNum::from_string("12").unwrap();
 
+    println!("{:?}", ub_div(vec![5, 3, 2, 4, 2, 2, 1], vec![2, 1]));
 
-    let b1 = BigNum::from_string(&args[1]).unwrap();
-    let b2 = BigNum::from_string(&args[2]).unwrap();
-
-    println!("{}", BigNum::bn_div(&b1, &b2));
+    println!("{}", BigNum::bn_div(&n1, &n2).unwrap());
 }
