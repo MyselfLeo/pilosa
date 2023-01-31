@@ -345,7 +345,7 @@ impl BigNum {
         let mut final_power = self.power;
         let mut abs = self.abs.clone();
 
-
+        // i lied
         let mut power = power;
         while power > 0 {
             if final_power > 0 {final_power -= 1;}
