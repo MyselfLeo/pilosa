@@ -55,6 +55,10 @@ impl BigNum {
     pub fn one() -> BigNum {BigNum {negative: false, abs: vec![1], power: 0}}
 
 
+    /// Return true if the BigNum is < 0.  
+    /// Note that technically, -0 can be represented
+    pub fn is_negative(&self) -> bool {return self.negative;}
+
 
     /// Returns a new BigNum, cleaned, from the given string.
     /// Can fail if the string is not properly formatted.
@@ -169,16 +173,25 @@ impl BigNum {
 
 
 
-
-    /// Reduce the power as much possible by removing useless decimal zeroes (0.10 => 0.1)
+    /// Clean the BigNum from any useless information:
+    /// - Reduce the power as much possible by removing useless decimal zeroes `(0.10 => 0.1)`
+    /// - Prevent the representation of `-0`
     fn clean(&mut self) {
-        if self.abs.is_empty() {return}
+        if self.abs.is_empty() {
+            if self.negative {self.negative = false;}
+            return;
+        }
 
         // decimal zeroes (12.120 => 12.12)
         let check = |x: &mut BigNum| x.abs.first().is_some() && x.abs.first().unwrap() == &0 && x.power > 0;
         while check(self) {
             self.power -= 1;
             self.abs.remove(0);
+        }
+        
+        // prevent -0
+        if (self.abs == vec![] || self.abs == vec![0]) && self.negative {
+            self.negative = false;
         }
     }
 
