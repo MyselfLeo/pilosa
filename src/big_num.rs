@@ -182,6 +182,13 @@ impl BigNum {
 
 
 
+    /// Return true if n is 0 (or -0, but it should not happen)
+    pub fn is_zero(&self) -> bool {
+        if self.abs.is_empty() {panic!("Error: BigNum does not have any digit. Please report this error");}
+        self.abs.len() == 1 && self.abs[0] == 0
+    }
+
+
 
     /// Clean the BigNum from any useless information:
     /// - useless significant zeroes (ex: 010 -> 10)
@@ -203,7 +210,7 @@ impl BigNum {
         core::ub_clean(&mut self.abs);
         
         // prevent -0
-        if (self.abs == vec![] || self.abs == vec![0]) && self.negative {
+        if self.is_zero() && self.negative {
             self.negative = false;
         }
     }
@@ -239,8 +246,7 @@ impl BigNum {
     /// ```
     pub fn opposite(&self) -> BigNum {
         // Prevent the creation of -0.
-        // we consider that self can't be -0 at the beginning
-        if self.abs == vec![] || self.abs == vec![0] {
+        if self.is_zero() {
             return self.clone();
         }
 
@@ -348,7 +354,7 @@ impl BigNum {
     /// assert_eq!(n1.bn_tenpow_mul(2), BigNum::from_string("12300").unwrap());
     /// assert_eq!(n2.bn_tenpow_mul(3), BigNum::from_string("24.23").unwrap());
     /// ```
-    pub fn bn_tenpow_mul(self, power: usize) -> BigNum {
+    pub fn bn_tenpow_mul(&self, power: usize) -> BigNum {
         // result values
         let mut final_power = self.power;
         let mut abs = self.abs.clone();
@@ -368,11 +374,32 @@ impl BigNum {
 
 
 
-    /// Return the BigNum divided by 10^power
-    pub fn bn_tenpow_div(n: &BigNum, power: isize) -> BigNum {
+    /// Return the BigNum divided by 10^power  
+    /// This is -way- quicker than using the basic division algorithm
+    /// as it's only a matter of adding or removing zeroes in the inner representation.
+    /// 
+    /// # Arguments
+    /// * `power` - A number so that BigNum is divided by 10^power
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("123").unwrap();
+    /// let n2 = BigNum::from_string("0.02423").unwrap();
+    /// let n3 = BigNum::from_string("-2498.244").unwrap();
+    /// 
+    /// assert_eq!(n1.bn_tenpow_div(2), BigNum::from_string("1.23").unwrap());
+    /// assert_eq!(n2.bn_tenpow_div(3), BigNum::from_string("0.00002423").unwrap());
+    /// assert_eq!(n3.bn_tenpow_div(0), BigNum::from_string("-2498.244").unwrap());
+    /// ```
+    pub fn bn_tenpow_div(&self, power: isize) -> BigNum {
         // very simple function as we only need to increase
         // the n.power by power
-        let mut res = BigNum {negative: n.negative, abs: n.abs.clone(), power: n.power + power as u32};
+        if power == 0 {return self.clone()}
+
+        let mut res = BigNum {negative: self.negative, abs: self.abs.clone(), power: self.power + power as u32};
         res.clean();
         res
     }
@@ -398,8 +425,32 @@ impl BigNum {
 
 
 
-    /// Return the euclidian quotient and remainder of num / denom
-    pub fn euclidian(num: &BigNum, denom: &BigNum) -> (BigNum, BigNum) {
+    /// Return the "euclidian" quotient and remainder of num / denom.  
+    /// More precisely, it returns `q` and `r` so that `num = denom * q + r` with `r < denom`    
+    /// **Note:** division by zero is not allowed as, if `denom = 0`, we have `num = 0 * q + r`. In that case `q` does not have a defined value.
+    /// 
+    /// # Arguments
+    /// * `num` - the numerator of the division, >= 0
+    /// * `denum` - the denominator of the division, > 0
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("1332").unwrap();
+    /// let n2 = BigNum::from_string("12").unwrap();
+    /// let n3 = BigNum::zero();
+    /// 
+    /// assert_eq!(BigNum::euclidian(&n1, &n2), Ok((BigNum::from_string("111").unwrap(), BigNum::from_string("0").unwrap()))); 
+    /// assert_eq!(BigNum::euclidian(&n2, &n1), Ok((BigNum::zero(), BigNum::from_string("12").unwrap()))); 
+    /// assert!(BigNum::euclidian(&n1, &n3).is_err());
+    /// ```
+    pub fn euclidian(num: &BigNum, denom: &BigNum) -> Result<(BigNum, BigNum), String> {
+        if denom.is_zero() {return Err("Division by zero".to_string())}
+        if num.is_negative() {return Err("The numerator cannot be negative".to_string())}
+        if denom.is_negative() {return Err("The denominator cannot be negative".to_string())}
+
         let mut remainder = num.clone();
         let mut quotient = BigNum::zero();
 
@@ -408,7 +459,7 @@ impl BigNum {
             quotient = quotient + BigNum::one();
         }
 
-        (quotient, remainder)
+        Ok((quotient, remainder))
     }
 
 
@@ -575,7 +626,7 @@ impl BigNum {
     /// ```
     pub fn bn_div(n1: &BigNum, n2: &BigNum) -> Result<BigNum, String> {
         // prevent zero division
-        if n2.abs == vec![] || n2.abs == vec![0] {
+        if n2.is_zero() {
             return Err("Division by zero".to_string());
         }
 
