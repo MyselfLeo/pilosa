@@ -279,6 +279,11 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     let n = v.len();
 
 
+    println!("Computing division");
+    println!("u: {:?}", u);
+    println!("v: {:?}", v);
+
+
 
     // v[n-1] must be < 5 to work with inner_div
     // if it is not, we need to normalize the dividend and divisor so that v[n-1] >= 5
@@ -332,6 +337,9 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     // only the remainder needs to be unnormalized
     let (quotient, remainder) = inner_div(nu, nv);
 
+    println!("result of inner_div: {:?}  {:?}", quotient, remainder);
+
+
     let (remainder, r0) = ub_shortdiv(remainder, normaliser);
 
     debug_assert!(r0 == 0, "r0 = {r0} != 0");
@@ -361,26 +369,29 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
 
+    // clone u as it needs to be mutable
+    let mut u = u.clone();
+    u.push(0);
+
     let n = v.len();
     let m = u.len() - n - 1;
 
     debug_assert!(v[n-1] > 5, "v[n-1] should be > 5");
 
-    // clone u as it needs to be mutable
-    let mut u = u.clone();
+    
 
     // quotient that will be returned
-    let mut q = vec![0u8; m+1];
+    let mut q = vec![0u8; m+2];
 
 
 
-
+    println!("n: {}  m: {}", n, m);
 
 
 
 
     for j in (0..m+1).rev() { // j goes from m to 0 (included)
-
+        println!("value of j: {j}");
 
         // estimation of q (called q_est) and r (r_est)
         let mut q_est = (u[j+n] * 10 + u[j+n-1]) / v[n-1];
