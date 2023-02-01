@@ -313,7 +313,9 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     // multiply nu by normaliser too
     let mut nu = ub_mul(u, vec![normaliser]);
 
-    
+    println!("multiplied by {normaliser}");
+    println!("nu: {:?}", nu);
+    println!("nv: {:?}", nv);
 
     // inner_div requires that nu is AT LEAST one digit longer than nv
     if nu.len() == nv.len() {nu.push(0);}
