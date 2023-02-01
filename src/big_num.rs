@@ -51,7 +51,7 @@ impl BigNum {
     }
     
     /// Return a BigNum representing zero (0)
-    pub fn zero() -> BigNum {BigNum {negative: false, abs: vec![], power: 0}}
+    pub fn zero() -> BigNum {BigNum {negative: false, abs: vec![0], power: 0}}
     /// Return a BigNum representing one (1)
     pub fn one() -> BigNum {BigNum {negative: false, abs: vec![1], power: 0}}
 
@@ -174,10 +174,17 @@ impl BigNum {
 
 
 
+    /// unclean one of the given BigNum so that both share the same amount of digits
+    fn same_digit_amount(n1: &mut BigNum, n2: &mut BigNum) {
+        while n1.abs.len() < n2.abs.len() {n1.abs.push(0);}
+        while n1.abs.len() > n2.abs.len() {n2.abs.push(0);}
+    }
+
 
 
 
     /// Clean the BigNum from any useless information:
+    /// - useless significant zeroes (ex: 010 -> 10)
     /// - Reduce the power as much possible by removing useless decimal zeroes `(0.10 => 0.1)`
     /// - Prevent the representation of `-0`
     fn clean(&mut self) {
@@ -192,6 +199,8 @@ impl BigNum {
             self.power -= 1;
             self.abs.remove(0);
         }
+
+        core::ub_clean(&mut self.abs);
         
         // prevent -0
         if (self.abs == vec![] || self.abs == vec![0]) && self.negative {
@@ -442,6 +451,7 @@ impl BigNum {
         let mut n2 = n2.clone();
 
         BigNum::same_power(&mut n1, &mut n2);
+        BigNum::same_digit_amount(&mut n1, &mut n2);
 
         let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs), n1.power).unwrap();
 
@@ -454,7 +464,25 @@ impl BigNum {
     
 
 
-    /// Add two BigNums
+    /// Add to BigNum together
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("53643.368359").unwrap();
+    /// let n2 = BigNum::from_string("-22398247.24982").unwrap();
+    /// let n3 = BigNum::zero();
+    /// let n4 = BigNum::from_string("-32089").unwrap();
+    /// let n5 = BigNum::from_string("209").unwrap();
+    /// 
+    /// assert_eq!(BigNum::bn_add(&n1, &n1), BigNum::from_string("107286.736718").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n1, &n2), BigNum::from_string("-22344603.881461").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n2, &n3), BigNum::from_string("-22398247.24982").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n1, &n1), BigNum::from_string("107286.736718").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n4, &n5), BigNum::from_string("-31880").unwrap());
+    /// ```
     pub fn bn_add(n1: &BigNum, n2: &BigNum) -> BigNum {
         // Transform the addition in order to use inner_add (addition of same sign)
         // or inner_sub (substraction of positive BigNums)
@@ -479,9 +507,26 @@ impl BigNum {
 
 
 
-    /// Substract two BigNums
+    /// Substract one BigNum to another
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("53643.368359").unwrap();
+    /// let n2 = BigNum::from_string("24872398247.24982").unwrap();
+    /// let n3 = BigNum::zero();
+    /// let n4 = BigNum::from_string("-32089").unwrap();
+    /// let n5 = BigNum::from_string("209").unwrap();
+    /// 
+    /// assert_eq!(BigNum::bn_sub(&n1, &n2), BigNum::from_string("-24872344603.881461").unwrap());
+    /// assert_eq!(BigNum::bn_sub(&n2, &n3), BigNum::from_string("24872398247.24982").unwrap());
+    /// assert_eq!(BigNum::bn_sub(&n1, &n1), BigNum::zero());
+    /// assert_eq!(BigNum::bn_sub(&n4, &n5), BigNum::from_string("-32298").unwrap());
+    /// ```
     pub fn bn_sub(n1: &BigNum, n2: &BigNum) -> BigNum {
-        match (n1.negative, n2.negative) {
+        let mut res = match (n1.negative, n2.negative) {
             (false, false) => {
                 if n1 < n2 {BigNum::inner_sub(n2, n1).opposite()} // require n1 > n2 :    (x-y) <=> -(y-x)
                 else {BigNum::inner_sub(n1, n2)}
@@ -495,7 +540,10 @@ impl BigNum {
             (false, true) => { // x - -y <=> x + y
                 n1 + n2
             },
-        }
+        };
+
+        res.clean();
+        res
     }
 
 
@@ -522,7 +570,7 @@ impl BigNum {
     /// let n2 = BigNum::from_string("12").unwrap();
     /// let n3 = BigNum::from_string("0").unwrap();
     /// 
-    /// assert_eq!(BigNum::bn_div(&n1, &n2), Ok(BigNum::from_string("102.019583333333333").unwrap()));
+    /// assert_eq!(BigNum::bn_div(&n1, &n2), Ok(BigNum::from_string("102.019583333333333").unwrap())); // considering FLOAT_PRECISION = 15
     /// assert!(BigNum::bn_div(&n1, &n3).is_err());
     /// ```
     pub fn bn_div(n1: &BigNum, n2: &BigNum) -> Result<BigNum, String> {
