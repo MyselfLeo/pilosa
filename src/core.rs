@@ -126,11 +126,8 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     if u.len() < v.len() {return ub_add(v, u)}
 
     // various optimization
-    if u == vec![0] {
-        
-        return v;
-    }
-    if v == vec![0] {return u;}
+    if u == vec![0] {return ub_cleaned(v);}
+    if v == vec![0] {return ub_cleaned(u);}
 
     let m = u.len();
     let n = v.len();
