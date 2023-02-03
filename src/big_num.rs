@@ -19,7 +19,6 @@ pub struct BigNum {
 
 
 impl BigNum {
-    
     /// Returns a new BigNum, cleaned (i.e with no useless zeroes) with the given values.
     /// Note: The validity of the arguments will not be tested. For example, `abs` could
     /// hold a value that is not a digit.
@@ -58,6 +57,17 @@ impl BigNum {
 
     /// Return true if the BigNum is < 0.  
     /// Note that technically, -0 can be represented
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// assert_eq!(BigNum::zero().is_negative(), false);
+    /// assert_eq!(BigNum::from_string("-24892.242").unwrap().is_negative(), true);
+    /// assert_eq!(BigNum::from_string("1332").unwrap().is_negative(), false);
+    /// assert_eq!(BigNum::from_string("-0").unwrap().is_negative(), false);         // -0 is converted to 0 automatically
+    /// ```
     pub fn is_negative(&self) -> bool {return self.negative;}
 
 
@@ -75,6 +85,7 @@ impl BigNum {
     /// 
     /// let number = BigNum::from_string("3536").unwrap();
     /// let number = BigNum::from_string("0").unwrap();
+    /// let number = BigNum::from_string("-0").unwrap();          // same thing as 0
     /// let number = BigNum::from_string("+24895.25243").unwrap();
     /// let number = BigNum::from_string("-0.00243").unwrap();
     /// ```
@@ -83,7 +94,7 @@ impl BigNum {
         if string.is_empty() {return Err("Empty string".to_string())}
 
         // some => sign specified (false or true), none => sign not specified (IMPLICIT_SIGN)
-        let negative = match string.chars().nth(0) {
+        let mut negative = match string.chars().nth(0) {
             Some('-') => Some(true),
             Some('+') => Some(false),
             _ => None
@@ -114,6 +125,7 @@ impl BigNum {
             None => Err("Invalid format".to_string()),
             Some(mut a) => {
                 ub_clean(&mut a);
+                if a == vec![0] {negative = Some(false)}; // prevent -0
                 Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32).unwrap())
             }
         }
