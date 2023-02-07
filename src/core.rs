@@ -235,7 +235,7 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 /// Compute the division of u by v, return the quotient q and the remainder r.  
-/// Simpler division algorithm as v is only 1 digit
+/// Simpler division algorithm compared to `ub_div` as v is only 1 digit
 /// 
 /// # Arguments
 /// * `u` - unsigned big ints (a Vec of digits, from least to most significant)
