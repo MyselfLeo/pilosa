@@ -665,7 +665,7 @@ impl BigNum {
 
 
         let (quotient, _) = if n2.abs.len() == 1 {
-            let (q, r) = core::ub_shortdiv(n1.abs, n2.abs[0]);
+            let (q, r) = core::ub_shortdiv(n1.abs, n2.abs[0]).expect("n2 was not clean when passed to bn_div, resulting in a division by 0"); // n2.abs[0] should not be 0
             (q, vec![r])
         } else {
             core::ub_div(n1.abs, n2.abs)

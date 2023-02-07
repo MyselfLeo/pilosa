@@ -234,9 +234,31 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
-/// Compute the division of u by v, return the quotient q and the remainder r
+/// Compute the division of u by v, return the quotient q and the remainder r.  
 /// Simpler division algorithm as v is only 1 digit
-pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
+/// 
+/// # Arguments
+/// * `u` - unsigned big ints (a Vec of digits, from least to most significant)
+/// * `v` - a digit != 0
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3];        // 364
+/// let n3 = vec![0, 0, 1, 0];     // 100
+/// 
+/// assert_eq!(core::ub_shortdiv(n1.clone(), 3), Ok((vec![1, 2, 9], 0)));
+/// assert_eq!(core::ub_shortdiv(n2, 9), Ok((vec![0, 4], 4)));
+/// assert_eq!(core::ub_shortdiv(n3, 1), Ok((vec![0, 0, 1], 0)));
+/// assert!(core::ub_shortdiv(n1, 0).is_err());
+/// ```
+pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> Result<(Vec<u8>, u8), String> {
+    if v == 0 {return Err("Division by zero".to_string())}
+    if v == 1 {return Ok((ub_cleaned(u), 0))}
+
     let n = u.len();
     let mut res = vec![0u8; n];
 
@@ -250,7 +272,7 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
     }
 
     ub_clean(&mut res);
-    (res, r)
+    Ok((res, r))
 }
 
 
@@ -337,7 +359,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     println!("result of inner_div: {:?}  {:?}", quotient, remainder);
 
 
-    let (remainder, r0) = ub_shortdiv(remainder, normaliser);
+    let (remainder, r0) = ub_shortdiv(remainder, normaliser).unwrap(); // normaliser =/= 0 so no risk of error
 
     debug_assert!(r0 == 0, "r0 = {r0} != 0");
 
