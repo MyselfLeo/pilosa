@@ -151,15 +151,29 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
+// todo: maybe allow the user to specify whether they want the result cleaned or not (?)
 
 
-/// Substract an unsigned big int u to an unsigned big int v
-/// (represented by vecs of u8, from least to most significant digit)
-/// requires u >= v and u and v of the same size (panics otherwise)
-/// returns a value of the same length
+
+/// Substract an unsigned big int u to an unsigned big int v.  
+/// requires u >= v and u and v of the same size (panics otherwise)  
+/// returns a value of the same length, NOT CLEANED  
 /// Based on the substraction algorithm in the Art of Computer Programming
+
+/// 
+/// # Arguments
+/// 
+/// * `u` & `v` - unsigned big ints (represented by vecs of u8, from least to most significant digit)
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// 
+/// ```
 pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
-    // the algorithm requires that u.len() == v.len()n
+    // the algorithm requires that u.len() == v.len()
     assert!(u.len() == v.len(), "Both unsigned big ints must have the same amount of digits");
 
     // optimization
