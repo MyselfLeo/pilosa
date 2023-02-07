@@ -4,7 +4,7 @@
 
 
 /// Clean the unsigned big int (vec of digits from least to most significant) by removing useless zeroes
-/// Will keep one zero if it is already here (ex: vec![0, 0, 0] -> vec![0])
+/// Will keep one zero if it is already here (ex: `vec![0, 0, 0]` -> `vec![0]`)
 /// 
 /// # Arguments
 /// 
