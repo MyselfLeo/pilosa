@@ -326,7 +326,17 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> Result<(Vec<u8>, u8), String> {
 
 
 
-/// Perform the division of u / v (returns also u % v)
+/// Returns u // v and u % v.  
+/// If `v` is only 1 digit, it is preferable to use `core::shortdiv` instead.
+/// 
+/// # Arguments
+/// 
+/// * `u` - the dividend of the operation, an unsigned bit int (a Vec of digits, from least to most significant)
+/// * `v` - the divisor, an unsigned big int too
+/// 
+/// # Examples
+/// 
+/// 
 pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
