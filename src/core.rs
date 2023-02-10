@@ -155,11 +155,10 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
-/// Substract an unsigned big int u to an unsigned big int v.  
+/// Substract an unsigned big int v to an unsigned big int u.
 /// requires u >= v and u and v of the same size (panics otherwise)  
 /// returns a value of the same length, NOT CLEANED  
 /// Based on the substraction algorithm in the Art of Computer Programming
-
 /// 
 /// # Arguments
 /// 
@@ -170,7 +169,14 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// ```
 /// use sloth_num::core;
 /// 
+/// // the numbers must have the same amount of digits
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3, 0];     // 364
+/// let n3 = vec![0, 0, 1, 0];     // 100
+/// let n4 = vec![4, 0, 0, 0];     // 4
 /// 
+/// assert_eq!(core::ub_sub(n1, n2), vec![9, 9, 3, 2]);
+/// assert_eq!(core::ub_sub(n3, n4), vec![6, 9, 0, 0]);
 /// ```
 pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() == v.len()
@@ -204,6 +210,26 @@ pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// Multiply 2 unsigned big ints u and v
 /// (represented by vecs of u8, from least to most significant digit)
 /// Based on the multiplication algorithm in the Art of Computer Programming
+/// 
+/// # Arguments
+/// 
+/// * `u` & `v` - unsigned big ints (represented by vecs of u8, from least to most significant digit)
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// // the numbers must have the same amount of digits
+/// let n1 = vec![3, 6, 7, 2];   // 2763
+/// let n2 = vec![4, 6, 3];      // 364
+/// let n3 = vec![0, 0, 1, 0];   // 100
+/// let n4 = vec![0];            // 0
+/// 
+/// assert_eq!(core::ub_mul(n1, n2.clone()), vec![2, 3, 7, 5, 0, 0, 1]);
+/// assert_eq!(core::ub_mul(n3.clone(), n4), vec![0]);
+/// assert_eq!(core::ub_mul(n3.clone(), n2), vec![0, 0, 4, 6, 3]);
+/// ```
 pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() >= v.len()
     if u.len() < v.len() {return ub_mul(v, u)}
@@ -545,8 +571,25 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 /// If b is a power of ten, returns this power
-/// ex: [0, 0, 1] => 2 (because 100 = 10^2)
-/// Does not work if b is not cleaned
+/// 
+/// # Arguments
+/// * `b` - a cleaned (no useless zero) unsigned big int (a Vec of digits, from least to most significant)
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// let n1 = vec![0, 0, 0, 1]; // 1000
+/// let n2 = vec![1, 0, 3];    // 301
+/// let n3 = vec![1];          // 1
+/// let n4 = vec![0, 0, 1, 0]; // 100 (not cleaned)
+/// 
+/// assert_eq!(core::is_power_of_ten(&n1), Some(3)); // 1000 = 10^3
+/// assert_eq!(core::is_power_of_ten(&n2), None);
+/// assert_eq!(core::is_power_of_ten(&n3), Some(0)); // 1 = 10^0
+/// assert_eq!(core::is_power_of_ten(&n4), None);    // will not work on non-cleaned numbers
+/// ```
 pub fn is_power_of_ten(b: &Vec<u8>) -> Option<usize> {
     match b.last()? {
         1 => {
