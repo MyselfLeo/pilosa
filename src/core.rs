@@ -2,6 +2,7 @@
 //! Those functions are used by the BigNum struct to represent and manipulate
 //! arbitrary long/precise numbers.
 
+use crate::assert_err;
 
 /// Clean the unsigned big int (vec of digits from least to most significant) by removing useless zeroes
 /// Will keep one zero if it is already here (ex: `vec![0, 0, 0]` -> `vec![0]`)
@@ -175,15 +176,15 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// let n3 = vec![0, 0, 1, 0];     // 100
 /// let n4 = vec![4, 0, 0, 0];     // 4
 /// 
-/// assert_eq!(core::ub_sub(n1, n2), vec![9, 9, 3, 2]);
-/// assert_eq!(core::ub_sub(n3, n4), vec![6, 9, 0, 0]);
+/// assert_eq!(core::ub_sub(n1, n2), Ok(vec![9, 9, 3, 2]));
+/// assert_eq!(core::ub_sub(n3, n4), Ok(vec![6, 9, 0, 0]));
 /// ```
-pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Result<Vec<u8>, String> {
     // the algorithm requires that u.len() == v.len()
-    assert!(u.len() == v.len(), "Both unsigned big ints must have the same amount of digits");
+    assert_err!(u.len() == v.len(), "Both unsigned big ints must have the same amount of digits");
 
     // optimization
-    if v == vec![0] {return u;}
+    if v == vec![0] {return Ok(u);}
 
     let n = u.len();
     let mut w = vec![0; n];
@@ -198,7 +199,7 @@ pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
     if k != 0 {panic!("Expected u >= v")}
 
-    w
+    Ok(w)
 }
 
 
@@ -226,19 +227,19 @@ pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// let n3 = vec![0, 0, 1, 0];   // 100
 /// let n4 = vec![0];            // 0
 /// 
-/// assert_eq!(core::ub_mul(n1, n2.clone()), vec![2, 3, 7, 5, 0, 0, 1]);
-/// assert_eq!(core::ub_mul(n3.clone(), n4), vec![0]);
-/// assert_eq!(core::ub_mul(n3.clone(), n2), vec![0, 0, 4, 6, 3]);
+/// assert_eq!(core::ub_mul(&n1, &n2), vec![2, 3, 7, 5, 0, 0, 1]);
+/// assert_eq!(core::ub_mul(&n3, &n4), vec![0]);
+/// assert_eq!(core::ub_mul(&n3, &n2), vec![0, 0, 4, 6, 3]);
 /// ```
-pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+pub fn ub_mul(u: &Vec<u8>, v: &Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() >= v.len()
     if u.len() < v.len() {return ub_mul(v, u)}
 
 
     // various optimisation
-    if v == vec![1] {return u;}
-    if u == vec![1] {return v;}
-    if u == vec![0] || v == vec![0] {return vec![0];}
+    if v == &vec![1] {return u.clone();}
+    if u == &vec![1] {return v.clone();}
+    if u == &vec![0] || v == &vec![0] {return vec![0];}
 
     
     let m = u.len();
@@ -331,30 +332,29 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> Result<(Vec<u8>, u8), String> {
 /// 
 /// # Arguments
 /// 
-/// * `u` - the dividend of the operation, an unsigned bit int (a Vec of digits, from least to most significant)
-/// * `v` - the divisor, an unsigned big int too
+/// * `u` - the dividend of the operation, a **cleaned** unsigned bit int (a Vec of digits, from least to most significant)
+/// * `v` - the divisor, a **cleaned** unsigned big int too
+/// 
 /// 
 /// # Examples
 /// 
 /// ```
 /// use sloth_num::core;
 /// 
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3];        // 364
+/// let n3 = vec![0, 0, 1];        // 100
+/// let n4 = vec![0];              // 0
 /// 
+/// assert_eq!(core::ub_div(&n1, &n2), Ok((vec![7], vec![5, 1, 2])));
+/// //assert_eq!(core::ub_div(&n2, &n3));
 /// ```
-pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
-
-
-    debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
-    debug_assert!(u.len() >= v.len(), "m can't be negative");
-
-    let v = v.clone();
+pub fn ub_div(u: &Vec<u8>, v: &Vec<u8>) -> Result<(Vec<u8>, Vec<u8>), String> {
+    assert_err!(v.len() > 1, "v needs to be of length 2 at least");
+    assert_err!(v.len() > 1, "v needs to be of length 2 at least");
+    assert_err!(u.len() >= v.len(), "m can't be negative");
 
     let n = v.len();
-
-
-    println!("Computing division");
-    println!("u: {:?}", u);
-    println!("v: {:?}", v);
 
 
 
@@ -368,7 +368,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-    let mut nv = ub_mul(v.clone(), vec![normaliser]);
+    let mut nv = ub_mul(v, &vec![normaliser]);
 
 
 
@@ -377,28 +377,24 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         normaliser -= 1;
         let mut rhs = v.clone();
         rhs.push(0);
-        nv = ub_sub(nv, rhs);
+        nv = ub_sub(nv, rhs).expect("internal error in ub_div");
 
 
     }
 
     // remove the last digit (which must be 0) if nv.len() > v.len()
     if nv.len() > v.len() {
-        debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");
+        assert_err!(nv.last() == Some(&0), "last is not 0 after normal correction");
         nv.pop();
     }
 
     // multiply nu by normaliser too
-    let mut nu = ub_mul(u, vec![normaliser]);
-
-    println!("multiplied by {normaliser}");
-    println!("nu: {:?}", nu);
-    println!("nv: {:?}", nv);
+    let mut nu = ub_mul(u, &vec![normaliser]);
 
     // inner_div requires that nu is AT LEAST one digit longer than nv
     if nu.len() == nv.len() {nu.push(0);}
 
-    debug_assert!(nv[nv.len() - 1] >= 5, "last digit of nv = {} < 5", nv[nv.len() - 1]);
+    assert_err!(nv[nv.len() - 1] >= 5, "last digit of nv = {} < 5", nv[nv.len() - 1]);
 
 
 
@@ -408,16 +404,14 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
     // the quotient did not change after the normalisation
     // only the remainder needs to be unnormalized
-    let (quotient, remainder) = inner_div(nu, nv);
-
-    println!("result of inner_div: {:?}  {:?}", quotient, remainder);
+    let (quotient, remainder) = inner_div(&nu, &nv);
 
 
-    let (remainder, r0) = ub_shortdiv(remainder, normaliser).unwrap(); // normaliser =/= 0 so no risk of error
+    let (remainder, r0) = ub_shortdiv(remainder, normaliser).expect("internal error in ub_div"); // normaliser =/= 0 so no risk of error
 
-    debug_assert!(r0 == 0, "r0 = {r0} != 0");
+    assert_err!(r0 == 0, "r0 = {r0} != 0");
 
-   (quotient, remainder)
+   Ok((quotient, remainder))
 }
 
 
@@ -445,11 +439,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 /// `u.len() = m + n + 1 (n > 2, m >= 0)`
 /// `v.len() = n`
 /// `v[n-1] > 5`
-/// 
-/// # Examples
-/// 
-/// 
-fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+fn inner_div(u: &Vec<u8>, v: &Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
 
@@ -502,7 +492,7 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         // and remember the borrowing that occured for later use
         
         let u_slice = u[j..j+n+1].to_vec();                          // (Uj+n Uj+n-1 ... Uj) of length n+1
-        let mut v_slice = ub_mul(v.clone(), vec![q_est]);       // q_est(Vn-1 ... V1 V0) of length n+1
+        let mut v_slice = ub_mul(v, &vec![q_est]);       // q_est(Vn-1 ... V1 V0) of length n+1
         v_slice.resize(n+1, 0); // the result of the ub_mul can be [0], so we resize to n+1
 
 
@@ -528,22 +518,22 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
             // lhs = v_slice - u_slice
-            let mut lhs = ub_sub(v_slice, u_slice); // lhs.len() = n+1
-            lhs.push(0);                                          // lhs.len() = n+2
+            let mut lhs = ub_sub(v_slice, u_slice).expect("internal error in inner_div"); // lhs.len() = n+1
+            lhs.push(0);                                                                                    // lhs.len() = n+2
             
 
 
 
 
             // compute substraction
-            let mut sub = ub_sub(ten_pow, lhs);
+            let mut sub = ub_sub(ten_pow, lhs).expect("internal error in inner_div");
             debug_assert!(sub[n+1] == 0, "Sub is full n+2 in size (no good)");
             sub.pop(); // remove last "0" that SHOULD be here if everything is ok
 
             sub
         }
         else {
-            ub_sub(u_slice, v_slice) // length n+1
+            ub_sub(u_slice, v_slice).expect("internal error in inner_div") // length n+1
         };
         debug_assert!(sub.len() == n+1, "sub is not n+1 in length ({:?})", sub);
 

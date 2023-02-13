@@ -5,4 +5,7 @@
 
 pub mod core;
 mod big_num;
+
+mod macros;
+
 pub use big_num::BigNum;

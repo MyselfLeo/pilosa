@@ -1,7 +1,7 @@
 use std::ops::{Add, Sub, Mul};
 
-use crate::core::{self, ub_clean};
-
+use crate::core;
+use crate::assert_err;
 
 
 const IMPLICIT_SIGN: bool  = false;
@@ -41,7 +41,7 @@ impl BigNum {
     pub fn new(negative: bool, abs: Vec<u8>, power: u32) -> Result<BigNum, String> {
         // check the validity of abs
         for d in &abs {
-            if *d > 9 {return Err(format!("abs contains a value that is not a Digit ({})", d));}
+            assert_err!(*d < 10, "abs contains a value that is not a Digit ({})", d);
         }
 
         let mut res = BigNum {negative, abs, power};
@@ -91,7 +91,7 @@ impl BigNum {
     /// ```
     pub fn from_string(origin_string: &str) -> Result<BigNum, String> {
         let mut string = origin_string.replace(" ", "");
-        if string.is_empty() {return Err("Empty string".to_string())}
+        assert_err!(!string.is_empty(), "Empty string");
 
         // some => sign specified (false or true), none => sign not specified (IMPLICIT_SIGN)
         let mut negative = match string.chars().nth(0) {
@@ -124,7 +124,7 @@ impl BigNum {
         match abs {
             None => Err("Invalid format".to_string()),
             Some(mut a) => {
-                ub_clean(&mut a);
+                core::ub_clean(&mut a);
                 if a == vec![0] {negative = Some(false)}; // prevent -0
                 Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32).unwrap())
             }
@@ -425,7 +425,7 @@ impl BigNum {
         // i don't know if it is worth it
 
         let sign = n1.negative != n2.negative;
-        let abs = core::ub_mul(n1.abs.clone(), n2.abs.clone());
+        let abs = core::ub_mul(&n1.abs, &n2.abs);
         let pow = n1.power + n2.power;
 
         let mut res = BigNum { negative: sign, abs: abs, power: pow };
@@ -459,9 +459,9 @@ impl BigNum {
     /// assert!(BigNum::euclidian(&n1, &n3).is_err());
     /// ```
     pub fn euclidian(num: &BigNum, denom: &BigNum) -> Result<(BigNum, BigNum), String> {
-        if denom.is_zero() {return Err("Division by zero".to_string())}
-        if num.is_negative() {return Err("The numerator cannot be negative".to_string())}
-        if denom.is_negative() {return Err("The denominator cannot be negative".to_string())}
+        assert_err!(!denom.is_zero(), "Division by zero");
+        assert_err!(!num.is_negative(), "The numerator cannot be negative");
+        assert_err!(!denom.is_negative(), "The denominator cannot be negative");
 
         let mut remainder = num.clone();
         let mut quotient = BigNum::zero();
@@ -516,7 +516,7 @@ impl BigNum {
         BigNum::same_power(&mut n1, &mut n2);
         BigNum::same_digit_amount(&mut n1, &mut n2);
 
-        let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs), n1.power).unwrap();
+        let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs).expect("internal error in inner_sub"), n1.power).unwrap();
 
         res.clean();
         res
@@ -638,9 +638,7 @@ impl BigNum {
     /// ```
     pub fn bn_div(n1: &BigNum, n2: &BigNum) -> Result<BigNum, String> {
         // prevent zero division
-        if n2.is_zero() {
-            return Err("Division by zero".to_string());
-        }
+        assert_err!(!n2.is_zero(), "Division by zero");
 
         // checking if n2 is a power of ten
         // really worth it (compared to bn_mul) as it could prevent precision lost
@@ -668,7 +666,7 @@ impl BigNum {
             let (q, r) = core::ub_shortdiv(n1.abs, n2.abs[0]).expect("n2 was not clean when passed to bn_div, resulting in a division by 0"); // n2.abs[0] should not be 0
             (q, vec![r])
         } else {
-            core::ub_div(n1.abs, n2.abs)
+            core::ub_div(&n1.abs, &n2.abs)?
         };
         
         debug_assert!(n1.power - n2.power > 0, "resulting power is negative");
