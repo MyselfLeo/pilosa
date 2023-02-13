@@ -177,7 +177,8 @@ impl BigNum {
 
     
 
-    /// Modify the given bignums so they have the same power
+    /// Modify the given bignums so they have the same power.
+    /// Does not change their values
     fn same_power(n1: &mut BigNum, n2: &mut BigNum) {
         if n1.power < n2.power {n1.with_power(n2.power)}
         else {n2.with_power(n1.power)}
@@ -186,7 +187,8 @@ impl BigNum {
 
 
 
-    /// unclean one of the given BigNum so that both share the same amount of digits
+    /// unclean one of the given BigNum so that both share the same amount of digits.
+    /// Does not change their values
     fn same_digit_amount(n1: &mut BigNum, n2: &mut BigNum) {
         while n1.abs.len() < n2.abs.len() {n1.abs.push(0);}
         while n1.abs.len() > n2.abs.len() {n2.abs.push(0);}
