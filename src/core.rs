@@ -336,7 +336,11 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> Result<(Vec<u8>, u8), String> {
 /// 
 /// # Examples
 /// 
+/// ```
+/// use sloth_num::core;
 /// 
+/// 
+/// ```
 pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
@@ -427,13 +431,24 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-/// Compute u / v and u % v
+/// Compute u / v and u % v.  
+/// This algorithm is based on the division algorithm in the Art of Computer Programming.
+/// However, the function expect the division to be normalised (i.e most significant digit of v > 5).
+/// The function `ub_div` manages this normalisation.
 /// 
-/// Conditions:
-/// u.len() = m + n + 1
-/// v.len() = n
+/// # Arguments
 /// 
-/// v[n-1] > 5
+/// * `u` - the dividend of the operation, an unsigned bit int (a Vec of digits, from least to most significant)
+/// * `v` - the divisor, an unsigned big int too
+/// 
+/// # Conditions:
+/// `u.len() = m + n + 1 (n > 2, m >= 0)`
+/// `v.len() = n`
+/// `v[n-1] > 5`
+/// 
+/// # Examples
+/// 
+/// 
 fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
