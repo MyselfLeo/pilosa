@@ -276,7 +276,7 @@ pub fn ub_mul(u: &Vec<u8>, v: &Vec<u8>) -> Vec<u8> {
 
 
 /// Compute the division of u by v, return the quotient q and the remainder r.  
-/// Simpler division algorithm compared to `ub_div` as v is only 1 digit
+/// Simpler division algorithm compared to [ub_div] as v is only 1 digit
 /// 
 /// # Arguments
 /// * `u` - unsigned big ints (a Vec of digits, from least to most significant)
@@ -328,7 +328,7 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> Result<(Vec<u8>, u8), String> {
 
 
 /// Returns u // v and u % v.  
-/// If `v` is only 1 digit, it is preferable to use `core::shortdiv` instead.
+/// If `v` is only 1 digit, it is preferable to use [ub_shortdiv] instead.
 /// 
 /// # Arguments
 /// 
@@ -428,7 +428,7 @@ pub fn ub_div(u: &Vec<u8>, v: &Vec<u8>) -> Result<(Vec<u8>, Vec<u8>), String> {
 /// Compute u / v and u % v.  
 /// This algorithm is based on the division algorithm in the Art of Computer Programming.
 /// However, the function expect the division to be normalised (i.e most significant digit of v > 5).
-/// The function `ub_div` manages this normalisation.
+/// The function [ub_div] manages this normalisation.
 /// 
 /// # Arguments
 /// 

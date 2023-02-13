@@ -136,7 +136,7 @@ impl BigNum {
 
 
     /// Returns a BigNum from a i32
-    /// The function simply convert the i32 into a string, then calls `BigNum::from_string()`
+    /// The function simply convert the i32 into a string, then calls [Self::from_string]
     /// 
     /// # Arguments
     /// 
@@ -155,7 +155,7 @@ impl BigNum {
         BigNum::from_string(&n.to_string())
     }
     /// Returns a BigNum from a f64
-    /// The function simply convert the f64 into a string, then calls `BigNum::from_string()`
+    /// The function simply convert the f64 into a string, then calls [Self::from_string]
     /// 
     /// # Arguments
     /// 
@@ -271,7 +271,7 @@ impl BigNum {
 
 
     /// Return true if n1 == n2
-    /// Will not work if both BigNums are not cleaned
+    /// Will not work if both [BigNum] are not cleaned
     fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
         n1.negative == n2.negative && n1.abs == n2.abs && n1.power == n2.power
     }
@@ -351,12 +351,13 @@ impl BigNum {
 
 
 
-    /// Return the BigNum multiplied by 10^power  
+    /// Return the [BigNum] multiplied by 10^power  
     /// This is quicker than using the basic multiplication algorithm
     /// as it's only a matter of adding or removing zeroes in the inner representation.
     /// 
     /// # Arguments
-    /// * `power` - A number so that BigNum is multiplied by 10^power
+    /// * `power` - A number so that self is multiplied by 10^power
+    /// * `pow_negative` - true = the power of ten is negative (ex: self * -10^3)
     /// 
     /// # Examples
     /// 
@@ -366,10 +367,10 @@ impl BigNum {
     /// let n1 = BigNum::from_string("123").unwrap();
     /// let n2 = BigNum::from_string("0.02423").unwrap();
     /// 
-    /// assert_eq!(n1.bn_tenpow_mul(2), BigNum::from_string("12300").unwrap());
-    /// assert_eq!(n2.bn_tenpow_mul(3), BigNum::from_string("24.23").unwrap());
+    /// assert_eq!(n1.bn_tenpow_mul(2, false), BigNum::from_string("12300").unwrap());
+    /// assert_eq!(n2.bn_tenpow_mul(3, true), BigNum::from_string("-24.23").unwrap());
     /// ```
-    pub fn bn_tenpow_mul(&self, power: usize) -> BigNum {
+    pub fn bn_tenpow_mul(&self, power: usize, pow_negative: bool) -> BigNum {
         // result values
         let mut final_power = self.power;
         let mut abs = self.abs.clone();
@@ -382,19 +383,19 @@ impl BigNum {
             power -= 1;
         }
 
-        let mut res = BigNum {negative: self.negative, abs: abs, power: final_power};
+        let mut res = BigNum {negative: self.negative != pow_negative, abs: abs, power: final_power};
         res.clean();
         res
     }
 
 
 
-    /// Return the BigNum divided by 10^power  
+    /// Return the [BigNum] divided by 10^power  
     /// This is -way- quicker than using the basic division algorithm
     /// as it's only a matter of adding or removing zeroes in the inner representation.
     /// 
     /// # Arguments
-    /// * `power` - A number so that BigNum is divided by 10^power
+    /// * `power` - A number so that [BigNum] is divided by 10^power
     /// * `pow_negative` - true = the power of ten is negative (ex: self * -10^3)
     /// 
     /// # Examples
@@ -423,9 +424,9 @@ impl BigNum {
 
 
 
-    /// Return the multiplication of 2 BigNums
+    /// Return the multiplication of 2 [BigNum]
     pub fn bn_mul(n1: &BigNum, n2: &BigNum) -> BigNum {
-        // Maybe we could check if n2 is a power of ten to use bn_tenpow_mul here
+        // Maybe we could check if n2 is a power of ten to use bn_tenpow_mu; here
         // i don't know if it is worth it
 
         let sign = n1.negative != n2.negative;
@@ -531,7 +532,7 @@ impl BigNum {
     
 
 
-    /// Add to BigNum together
+    /// Add two [BigNum] together
     /// 
     /// # Examples
     /// 
@@ -574,7 +575,7 @@ impl BigNum {
 
 
 
-    /// Substract one BigNum to another
+    /// Substract one [BigNum] to another
     /// 
     /// # Examples
     /// 
@@ -620,13 +621,13 @@ impl BigNum {
 
 
 
-    /// Divide one BigNum by another.  
+    /// Divide one [BigNum] by another.  
     /// The result will have a maximum precision of FLOAT_PRECISION digits after the dot. If the result is not perfect (ex: non-decimal values), the result
     /// will be NOT be rounded, so the actual precision will be +- 10^(-FLOAT_PRECISION)
     /// 
     /// # Arguments
-    /// * `n1` - a BigNum
-    /// * `n2` - a BigNum. Must not be zero or the operation results in an error.
+    /// * `n1` - a [BigNum]
+    /// * `n2` - a [BigNum]. Must not be zero or the operation results in an error.
     ///
     /// # Examples
     /// 
@@ -685,11 +686,11 @@ impl BigNum {
 
 
 
-    /// Compute the power to the nth of the given BigNum.
+    /// Compute the power to the nth of the given [BigNum].
     ///
     /// # Arguments
     /// 
-    /// * `n` - a BigNum
+    /// * `n` - a [BigNum]
     /// * `p` - an i32 representing the power. As of now, decimal powers are not supported
     /// 
     /// # Examples
