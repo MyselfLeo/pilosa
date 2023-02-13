@@ -1,3 +1,4 @@
+use std::ops::Div;
 use std::ops::{Add, Sub, Mul};
 
 use crate::core;
@@ -394,6 +395,7 @@ impl BigNum {
     /// 
     /// # Arguments
     /// * `power` - A number so that BigNum is divided by 10^power
+    /// * `pow_negative` - true = the power of ten is negative (ex: self * -10^3)
     /// 
     /// # Examples
     /// 
@@ -404,16 +406,16 @@ impl BigNum {
     /// let n2 = BigNum::from_string("0.02423").unwrap();
     /// let n3 = BigNum::from_string("-2498.244").unwrap();
     /// 
-    /// assert_eq!(n1.bn_tenpow_div(2), BigNum::from_string("1.23").unwrap());
-    /// assert_eq!(n2.bn_tenpow_div(3), BigNum::from_string("0.00002423").unwrap());
-    /// assert_eq!(n3.bn_tenpow_div(0), BigNum::from_string("-2498.244").unwrap());
+    /// assert_eq!(n1.bn_tenpow_div(2, false), BigNum::from_string("1.23").unwrap());
+    /// assert_eq!(n2.bn_tenpow_div(3, true), BigNum::from_string("-0.00002423").unwrap());
+    /// assert_eq!(n3.bn_tenpow_div(0, false), BigNum::from_string("-2498.244").unwrap());
     /// ```
-    pub fn bn_tenpow_div(&self, power: isize) -> BigNum {
+    pub fn bn_tenpow_div(&self, power: isize, pow_negative: bool) -> BigNum {
         // very simple function as we only need to increase
         // the n.power by power
         if power == 0 {return self.clone()}
 
-        let mut res = BigNum {negative: self.negative, abs: self.abs.clone(), power: self.power + power as u32};
+        let mut res = BigNum {negative: self.negative != pow_negative, abs: self.abs.clone(), power: self.power + power as u32};
         res.clean();
         res
     }
@@ -646,7 +648,7 @@ impl BigNum {
         // really worth it (compared to bn_mul) as it could prevent precision lost
         // (the normal algorithm would return 10 / 100 = 0.0999999999)
         match n2.is_power_of_ten() {
-            Some(p) => return Ok(BigNum::bn_tenpow_div(n1, p)),
+            Some(p) => return Ok(BigNum::bn_tenpow_div(n1, p, n2.is_negative())),
             None => ()
         };
 
@@ -681,7 +683,49 @@ impl BigNum {
     }
 
 
+
+
+    /// Compute the power to the nth of the given BigNum.
+    ///
+    /// # Arguments
+    /// 
+    /// * `n` - a BigNum
+    /// * `p` - an i32 representing the power. As of now, decimal powers are not supported
+    /// 
+    /// # Examples
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("123").unwrap();
+    /// let n2 = BigNum::from_string("-10").unwrap();
+    /// 
+    /// assert_eq!(BigNum::bn_pow(&n1, 5), BigNum::from_string("28153056843").unwrap());
+    /// assert_eq!(BigNum::bn_pow(&n2, -3), BigNum::from_string("-0.001").unwrap());
+    /// assert_eq!(BigNum::bn_pow(&n1, 0), BigNum::one());
+    /// ```
+    pub fn bn_pow(n: &BigNum, p: i32) -> BigNum {
+        println!("bn_pow called on {} ^ {p}", n);
+        // exit conditions (this function is recursive)
+        if p == 0 {return BigNum::one()}
+        if p == 1 {return n.clone()}
+
+        // ex: 10^4 = 10^2
+        let temp = BigNum::bn_pow(n, p/2);
+
+        let res = if p % 2 == 0 {&temp * &temp}
+        else if p > 0 {&(&temp * &temp) * n}
+        else {&(&temp * &temp) / n};
+
+        println!("result: {res}");
+
+        res
+    }
+
+
 }
+
+
+
 
 
 
@@ -801,5 +845,21 @@ impl Mul for BigNum {
 
     fn mul(self, rhs: Self) -> Self::Output {
         BigNum::bn_mul(&self, &rhs)
+    }
+}
+
+
+impl Div for &BigNum {
+    type Output = BigNum;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        BigNum::bn_div(self, rhs).unwrap()
+    }
+}
+impl Div for BigNum {
+    type Output = BigNum;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        BigNum::bn_div(&self, &rhs).unwrap()
     }
 }
