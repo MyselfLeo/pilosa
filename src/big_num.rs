@@ -702,6 +702,7 @@ impl BigNum {
     /// let n3 = BigNum::from_string("2.5").unwrap();
     /// 
     /// assert_eq!(BigNum::bn_pow(&n1, 5), BigNum::from_string("28153056843").unwrap());
+    /// assert_eq!(BigNum::bn_pow(&n1, 1), BigNum::from_string("123").unwrap());
     /// assert_eq!(BigNum::bn_pow(&n2, -3), BigNum::from_string("-0.001").unwrap());
     /// assert_eq!(BigNum::bn_pow(&n3, 5), BigNum::from_string("97.65625").unwrap());
     /// assert_eq!(BigNum::bn_pow(&n1, 0), BigNum::one());
