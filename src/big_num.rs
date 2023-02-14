@@ -708,7 +708,6 @@ impl BigNum {
     /// assert_eq!(BigNum::bn_pow(&n1, 0), BigNum::one());
     /// ```
     pub fn bn_pow(n: &BigNum, p: i32) -> BigNum {
-        println!("bn_pow called on {} ^ {p}", n);
         // exit conditions (this function is recursive)
         if p == 0 {return BigNum::one()}
         if p == 1 {return n.clone()}
@@ -719,8 +718,6 @@ impl BigNum {
         let res = if p % 2 == 0 {&temp * &temp}
         else if p > 0 {&(&temp * &temp) * n}
         else {&(&temp * &temp) / n};
-
-        println!("result: {res}");
 
         res
     }
