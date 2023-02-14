@@ -712,7 +712,7 @@ impl BigNum {
         if p == 0 {return BigNum::one()}
         if p == 1 {return n.clone()}
 
-        // ex: 10^4 = 10^2
+        // ex: 10^4 = 10^2 * 10^2
         let temp = BigNum::bn_pow(n, p/2);
 
         let res = if p % 2 == 0 {&temp * &temp}
