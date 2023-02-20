@@ -6,7 +6,7 @@ use crate::assert_err;
 
 
 const IMPLICIT_SIGN: bool  = false;
-const FLOAT_PRECISION: i64 = 15;
+pub const FLOAT_PRECISION: i64 = 15;
 
 
 /// Represents an arbitrary long/precise decimal number
