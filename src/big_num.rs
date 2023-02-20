@@ -6,6 +6,8 @@ use crate::assert_err;
 
 
 const IMPLICIT_SIGN: bool  = false;
+
+/// Maximum number of decimal digits when perfoming a division on BigNums
 pub const FLOAT_PRECISION: i64 = 15;
 
 

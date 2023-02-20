@@ -9,3 +9,4 @@ pub mod core;
 mod big_num;
 
 pub use big_num::BigNum;
+pub use big_num::FLOAT_PRECISION;
