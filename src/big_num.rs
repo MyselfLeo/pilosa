@@ -723,8 +723,6 @@ impl BigNum {
 
         res
     }
-
-
 }
 
 
@@ -801,68 +799,41 @@ impl PartialOrd for BigNum {
 
 
 
-
-
-
-impl Add for &BigNum {
-    type Output = BigNum;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        BigNum::bn_add(self, rhs)
-    }
+macro_rules! op_impl {
+    ($op:ty, $op_f:ident, $bn_f:ident) => {
+        impl $op for &BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(self, rhs)
+            }
+        }
+        impl $op for BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(&self, &rhs)
+            }
+        }
+    };
 }
-impl Add for BigNum {
-    type Output = BigNum;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        BigNum::bn_add(&self, &rhs)
-    }
-}
-
-
-impl Sub for &BigNum {
-    type Output = BigNum;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        BigNum::bn_sub(self, rhs)
-    }
-}
-impl Sub for BigNum {
-    type Output = BigNum;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        BigNum::bn_sub(&self, &rhs)
-    }
-}
-
-
-impl Mul for &BigNum {
-    type Output = BigNum;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        BigNum::bn_mul(self, rhs)
-    }
-}
-impl Mul for BigNum {
-    type Output = BigNum;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        BigNum::bn_mul(&self, &rhs)
-    }
+macro_rules! op_impl_unwrap {
+    ($op:ty, $op_f:ident, $bn_f:ident) => {
+        impl $op for &BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(self, rhs).unwrap()
+            }
+        }
+        impl $op for BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(&self, &rhs).unwrap()
+            }
+        }
+    };
 }
 
 
-impl Div for &BigNum {
-    type Output = BigNum;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        BigNum::bn_div(self, rhs).unwrap()
-    }
-}
-impl Div for BigNum {
-    type Output = BigNum;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        BigNum::bn_div(&self, &rhs).unwrap()
-    }
-}
+op_impl!(Add, add, bn_add);
+op_impl!(Sub, sub, bn_sub);
+op_impl!(Mul, mul, bn_mul);
+op_impl_unwrap!(Div, div, bn_div);
