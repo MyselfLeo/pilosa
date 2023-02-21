@@ -72,7 +72,7 @@ impl BigNum {
     /// assert_eq!(BigNum::from_string("-0").unwrap().is_negative(), false);         // -0 is converted to 0 automatically
     /// ```
     pub fn is_negative(&self) -> bool {return self.negative;}
-
+  
 
     /// Returns a new BigNum, cleaned, from the given string.
     /// Can fail if the string is not properly formatted.
