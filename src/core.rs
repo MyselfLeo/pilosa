@@ -2,9 +2,10 @@
 //! Those functions are used by the BigNum struct to represent and manipulate
 //! arbitrary long/precise numbers.
 
+use crate::assert_err;
 
 /// Clean the unsigned big int (vec of digits from least to most significant) by removing useless zeroes
-/// Will keep one zero if it is already here (ex: vec![0, 0, 0] -> vec![0])
+/// Will keep one zero if it is already here (ex: `vec![0, 0, 0]` -> `vec![0]`)
 /// 
 /// # Arguments
 /// 
@@ -95,11 +96,8 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
     if u.len() < v.len() {return ub_add(v, u)}
 
     // various optimization
-    if u == vec![0] {
-        
-        return v;
-    }
-    if v == vec![0] {return u;}
+    if u == vec![0] {return ub_cleaned(v);}
+    if v == vec![0] {return ub_cleaned(u);}
 
     let m = u.len();
     let n = v.len();
@@ -123,19 +121,39 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
+// todo: maybe allow the user to specify whether they want the result cleaned or not (?)
 
 
-/// Substract an unsigned big int u to an unsigned big int v
-/// (represented by vecs of u8, from least to most significant digit)
-/// requires u >= v and u and v of the same size (panics otherwise)
-/// returns a value of the same length
+
+/// Substract an unsigned big int v to an unsigned big int u.
+/// requires u >= v and u and v of the same size (panics otherwise)  
+/// returns a value of the same length, NOT CLEANED  
 /// Based on the substraction algorithm in the Art of Computer Programming
-pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
-    // the algorithm requires that u.len() == v.len()n
-    assert!(u.len() == v.len(), "Both unsigned big ints must have the same amount of digits");
+/// 
+/// # Arguments
+/// 
+/// * `u` & `v` - unsigned big ints (represented by vecs of u8, from least to most significant digit)
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// // the numbers must have the same amount of digits
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3, 0];     // 364
+/// let n3 = vec![0, 0, 1, 0];     // 100
+/// let n4 = vec![4, 0, 0, 0];     // 4
+/// 
+/// assert_eq!(core::ub_sub(n1, n2), Ok(vec![9, 9, 3, 2]));
+/// assert_eq!(core::ub_sub(n3, n4), Ok(vec![6, 9, 0, 0]));
+/// ```
+pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Result<Vec<u8>, String> {
+    // the algorithm requires that u.len() == v.len()
+    assert_err!(u.len() == v.len(), "Both unsigned big ints must have the same amount of digits");
 
     // optimization
-    if v == vec![0] {return u;}
+    if v == vec![0] {return Ok(u);}
 
     let n = u.len();
     let mut w = vec![0; n];
@@ -150,7 +168,7 @@ pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
     if k != 0 {panic!("Expected u >= v")}
 
-    w
+    Ok(w)
 }
 
 
@@ -162,15 +180,35 @@ pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// Multiply 2 unsigned big ints u and v
 /// (represented by vecs of u8, from least to most significant digit)
 /// Based on the multiplication algorithm in the Art of Computer Programming
-pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
+/// 
+/// # Arguments
+/// 
+/// * `u` & `v` - unsigned big ints (represented by vecs of u8, from least to most significant digit)
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// // the numbers must have the same amount of digits
+/// let n1 = vec![3, 6, 7, 2];   // 2763
+/// let n2 = vec![4, 6, 3];      // 364
+/// let n3 = vec![0, 0, 1, 0];   // 100
+/// let n4 = vec![0];            // 0
+/// 
+/// assert_eq!(core::ub_mul(&n1, &n2), vec![2, 3, 7, 5, 0, 0, 1]);
+/// assert_eq!(core::ub_mul(&n3, &n4), vec![0]);
+/// assert_eq!(core::ub_mul(&n3, &n2), vec![0, 0, 4, 6, 3]);
+/// ```
+pub fn ub_mul(u: &Vec<u8>, v: &Vec<u8>) -> Vec<u8> {
     // the algorithm requires that u.len() >= v.len()
     if u.len() < v.len() {return ub_mul(v, u)}
 
 
     // various optimisation
-    if v == vec![1] {return u;}
-    if u == vec![1] {return v;}
-    if u == vec![0] || v == vec![0] {return vec![0];}
+    if v == &vec![1] {return u.clone();}
+    if u == &vec![1] {return v.clone();}
+    if u == &vec![0] || v == &vec![0] {return vec![0];}
 
     
     let m = u.len();
@@ -206,9 +244,31 @@ pub fn ub_mul(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 
 
 
-/// Compute the division of u by v, return the quotient q and the remainder r
-/// Simpler division algorithm as v is only 1 digit
-pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
+/// Compute the division of u by v, return the quotient q and the remainder r.  
+/// Simpler division algorithm compared to [ub_div] as v is only 1 digit
+/// 
+/// # Arguments
+/// * `u` - unsigned big ints (a Vec of digits, from least to most significant)
+/// * `v` - a digit != 0
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3];        // 364
+/// let n3 = vec![0, 0, 1, 0];     // 100
+/// 
+/// assert_eq!(core::ub_shortdiv(n1.clone(), 3), Ok((vec![1, 2, 9], 0)));
+/// assert_eq!(core::ub_shortdiv(n2, 9), Ok((vec![0, 4], 4)));
+/// assert_eq!(core::ub_shortdiv(n3, 1), Ok((vec![0, 0, 1], 0)));
+/// assert!(core::ub_shortdiv(n1, 0).is_err());
+/// ```
+pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> Result<(Vec<u8>, u8), String> {
+    if v == 0 {return Err("Division by zero".to_string())}
+    if v == 1 {return Ok((ub_cleaned(u), 0))}
+
     let n = u.len();
     let mut res = vec![0u8; n];
 
@@ -222,7 +282,7 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
     }
 
     ub_clean(&mut res);
-    (res, r)
+    Ok((res, r))
 }
 
 
@@ -236,14 +296,32 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> (Vec<u8>, u8) {
 
 
 
-/// Perform the division of u / v (returns also u % v)
-pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
-
-
-    debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
-    debug_assert!(u.len() >= v.len(), "m can't be negative");
-
-    let v = v.clone();
+/// Returns u // v and u % v.  
+/// If `v` is only 1 digit, it is preferable to use [ub_shortdiv] instead.
+/// 
+/// # Arguments
+/// 
+/// * `u` - the dividend of the operation, a **cleaned** unsigned bit int (a Vec of digits, from least to most significant)
+/// * `v` - the divisor, a **cleaned** unsigned big int too
+/// 
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// let n1 = vec![3, 6, 7, 2];     // 2763
+/// let n2 = vec![4, 6, 3];        // 364
+/// let n3 = vec![0, 0, 1];        // 100
+/// let n4 = vec![0];              // 0
+/// 
+/// assert_eq!(core::ub_div(&n1, &n2), Ok((vec![7], vec![5, 1, 2])));
+/// //assert_eq!(core::ub_div(&n2, &n3));
+/// ```
+pub fn ub_div(u: &Vec<u8>, v: &Vec<u8>) -> Result<(Vec<u8>, Vec<u8>), String> {
+    assert_err!(v.len() > 1, "v needs to be of length 2 at least");
+    assert_err!(v.len() > 1, "v needs to be of length 2 at least");
+    assert_err!(u.len() >= v.len(), "m can't be negative");
 
     let n = v.len();
 
@@ -259,7 +337,7 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-    let mut nv = ub_mul(v.clone(), vec![normaliser]);
+    let mut nv = ub_mul(v, &vec![normaliser]);
 
 
 
@@ -268,26 +346,24 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         normaliser -= 1;
         let mut rhs = v.clone();
         rhs.push(0);
-        nv = ub_sub(nv, rhs);
+        nv = ub_sub(nv, rhs).expect("internal error in ub_div");
 
 
     }
 
     // remove the last digit (which must be 0) if nv.len() > v.len()
     if nv.len() > v.len() {
-        debug_assert!(nv.last() == Some(&0), "last is not 0 after normal correction");
+        assert_err!(nv.last() == Some(&0), "last is not 0 after normal correction");
         nv.pop();
     }
 
     // multiply nu by normaliser too
-    let mut nu = ub_mul(u, vec![normaliser]);
-
-    
+    let mut nu = ub_mul(u, &vec![normaliser]);
 
     // inner_div requires that nu is AT LEAST one digit longer than nv
     if nu.len() == nv.len() {nu.push(0);}
 
-    debug_assert!(nv[nv.len() - 1] >= 5, "last digit of nv = {} < 5", nv[nv.len() - 1]);
+    assert_err!(nv[nv.len() - 1] >= 5, "last digit of nv = {} < 5", nv[nv.len() - 1]);
 
 
 
@@ -297,13 +373,14 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
     // the quotient did not change after the normalisation
     // only the remainder needs to be unnormalized
-    let (quotient, remainder) = inner_div(nu, nv);
+    let (quotient, remainder) = inner_div(&nu, &nv);
 
-    let (remainder, r0) = ub_shortdiv(remainder, normaliser);
 
-    debug_assert!(r0 == 0, "r0 = {r0} != 0");
+    let (remainder, r0) = ub_shortdiv(remainder, normaliser).expect("internal error in ub_div"); // normaliser =/= 0 so no risk of error
 
-   (quotient, remainder)
+    assert_err!(r0 == 0, "r0 = {r0} != 0");
+
+   Ok((quotient, remainder))
 }
 
 
@@ -317,37 +394,47 @@ pub fn ub_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 
-/// Compute u / v and u % v
+/// Compute u / v and u % v.  
+/// This algorithm is based on the division algorithm in the Art of Computer Programming.
+/// However, the function expect the division to be normalised (i.e most significant digit of v > 5).
+/// The function [ub_div] manages this normalisation.
 /// 
-/// Conditions:
-/// u.len() = m + n + 1
-/// v.len() = n
+/// # Arguments
 /// 
-/// v[n-1] > 5
-fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+/// * `u` - the dividend of the operation, an unsigned bit int (a Vec of digits, from least to most significant)
+/// * `v` - the divisor, an unsigned big int too
+/// 
+/// # Conditions:
+/// `u.len() = m + n + 1 (n > 2, m >= 0)`
+/// `v.len() = n`
+/// `v[n-1] > 5`
+fn inner_div(u: &Vec<u8>, v: &Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     debug_assert!(v.len() > 1, "v needs to be of length 2 at least");
     debug_assert!(u.len() >= v.len(), "m can't be negative");
+
+    // clone u as it needs to be mutable
+    let mut u = u.clone();
+    u.push(0);
 
     let n = v.len();
     let m = u.len() - n - 1;
 
     debug_assert!(v[n-1] > 5, "v[n-1] should be > 5");
 
-    // clone u as it needs to be mutable
-    let mut u = u.clone();
+    
 
     // quotient that will be returned
-    let mut q = vec![0u8; m+1];
+    let mut q = vec![0u8; m+2];
 
 
 
-
+    println!("n: {}  m: {}", n, m);
 
 
 
 
     for j in (0..m+1).rev() { // j goes from m to 0 (included)
-
+        println!("value of j: {j}");
 
         // estimation of q (called q_est) and r (r_est)
         let mut q_est = (u[j+n] * 10 + u[j+n-1]) / v[n-1];
@@ -374,7 +461,7 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
         // and remember the borrowing that occured for later use
         
         let u_slice = u[j..j+n+1].to_vec();                          // (Uj+n Uj+n-1 ... Uj) of length n+1
-        let mut v_slice = ub_mul(v.clone(), vec![q_est]);       // q_est(Vn-1 ... V1 V0) of length n+1
+        let mut v_slice = ub_mul(v, &vec![q_est]);       // q_est(Vn-1 ... V1 V0) of length n+1
         v_slice.resize(n+1, 0); // the result of the ub_mul can be [0], so we resize to n+1
 
 
@@ -400,22 +487,22 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
             // lhs = v_slice - u_slice
-            let mut lhs = ub_sub(v_slice, u_slice); // lhs.len() = n+1
-            lhs.push(0);                                          // lhs.len() = n+2
+            let mut lhs = ub_sub(v_slice, u_slice).expect("internal error in inner_div"); // lhs.len() = n+1
+            lhs.push(0);                                                                                    // lhs.len() = n+2
             
 
 
 
 
             // compute substraction
-            let mut sub = ub_sub(ten_pow, lhs);
+            let mut sub = ub_sub(ten_pow, lhs).expect("internal error in inner_div");
             debug_assert!(sub[n+1] == 0, "Sub is full n+2 in size (no good)");
             sub.pop(); // remove last "0" that SHOULD be here if everything is ok
 
             sub
         }
         else {
-            ub_sub(u_slice, v_slice) // length n+1
+            ub_sub(u_slice, v_slice).expect("internal error in inner_div") // length n+1
         };
         debug_assert!(sub.len() == n+1, "sub is not n+1 in length ({:?})", sub);
 
@@ -468,8 +555,25 @@ fn inner_div(u: Vec<u8>, v: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 
 
 /// If b is a power of ten, returns this power
-/// ex: [0, 0, 1] => 2 (because 100 = 10^2)
-/// Does not work if b is not cleaned
+/// 
+/// # Arguments
+/// * `b` - a cleaned (no useless zero) unsigned big int (a Vec of digits, from least to most significant)
+/// 
+/// # Examples
+/// 
+/// ```
+/// use sloth_num::core;
+/// 
+/// let n1 = vec![0, 0, 0, 1]; // 1000
+/// let n2 = vec![1, 0, 3];    // 301
+/// let n3 = vec![1];          // 1
+/// let n4 = vec![0, 0, 1, 0]; // 100 (not cleaned)
+/// 
+/// assert_eq!(core::is_power_of_ten(&n1), Some(3)); // 1000 = 10^3
+/// assert_eq!(core::is_power_of_ten(&n2), None);
+/// assert_eq!(core::is_power_of_ten(&n3), Some(0)); // 1 = 10^0
+/// assert_eq!(core::is_power_of_ten(&n4), None);    // will not work on non-cleaned numbers
+/// ```
 pub fn is_power_of_ten(b: &Vec<u8>) -> Option<usize> {
     match b.last()? {
         1 => {

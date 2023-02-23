@@ -1,11 +1,14 @@
+use std::ops::Div;
 use std::ops::{Add, Sub, Mul};
 
-use crate::core::{self, ub_clean};
-
+use crate::core;
+use crate::assert_err;
 
 
 const IMPLICIT_SIGN: bool  = false;
-const FLOAT_PRECISION: i64 = 15;
+
+/// Maximum number of decimal digits when perfoming a division on BigNums
+pub const FLOAT_PRECISION: i64 = 15;
 
 
 /// Represents an arbitrary long/precise decimal number
@@ -19,7 +22,6 @@ pub struct BigNum {
 
 
 impl BigNum {
-    
     /// Returns a new BigNum, cleaned (i.e with no useless zeroes) with the given values.
     /// Note: The validity of the arguments will not be tested. For example, `abs` could
     /// hold a value that is not a digit.
@@ -42,7 +44,7 @@ impl BigNum {
     pub fn new(negative: bool, abs: Vec<u8>, power: u32) -> Result<BigNum, String> {
         // check the validity of abs
         for d in &abs {
-            if *d > 9 {return Err(format!("abs contains a value that is not a Digit ({})", d));}
+            assert_err!(*d < 10, "abs contains a value that is not a Digit ({})", d);
         }
 
         let mut res = BigNum {negative, abs, power};
@@ -51,15 +53,26 @@ impl BigNum {
     }
     
     /// Return a BigNum representing zero (0)
-    pub fn zero() -> BigNum {BigNum {negative: false, abs: vec![], power: 0}}
+    pub fn zero() -> BigNum {BigNum {negative: false, abs: vec![0], power: 0}}
     /// Return a BigNum representing one (1)
     pub fn one() -> BigNum {BigNum {negative: false, abs: vec![1], power: 0}}
 
 
     /// Return true if the BigNum is < 0.  
     /// Note that technically, -0 can be represented
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// assert_eq!(BigNum::zero().is_negative(), false);
+    /// assert_eq!(BigNum::from_string("-24892.242").unwrap().is_negative(), true);
+    /// assert_eq!(BigNum::from_string("1332").unwrap().is_negative(), false);
+    /// assert_eq!(BigNum::from_string("-0").unwrap().is_negative(), false);         // -0 is converted to 0 automatically
+    /// ```
     pub fn is_negative(&self) -> bool {return self.negative;}
-
+  
 
     /// Returns a new BigNum, cleaned, from the given string.
     /// Can fail if the string is not properly formatted.
@@ -75,15 +88,16 @@ impl BigNum {
     /// 
     /// let number = BigNum::from_string("3536").unwrap();
     /// let number = BigNum::from_string("0").unwrap();
+    /// let number = BigNum::from_string("-0").unwrap();          // same thing as 0
     /// let number = BigNum::from_string("+24895.25243").unwrap();
     /// let number = BigNum::from_string("-0.00243").unwrap();
     /// ```
     pub fn from_string(origin_string: &str) -> Result<BigNum, String> {
         let mut string = origin_string.replace(" ", "");
-        if string.is_empty() {return Err("Empty string".to_string())}
+        assert_err!(!string.is_empty(), "Empty string");
 
         // some => sign specified (false or true), none => sign not specified (IMPLICIT_SIGN)
-        let negative = match string.chars().nth(0) {
+        let mut negative = match string.chars().nth(0) {
             Some('-') => Some(true),
             Some('+') => Some(false),
             _ => None
@@ -113,7 +127,8 @@ impl BigNum {
         match abs {
             None => Err("Invalid format".to_string()),
             Some(mut a) => {
-                ub_clean(&mut a);
+                core::ub_clean(&mut a);
+                if a == vec![0] {negative = Some(false)}; // prevent -0
                 Ok(BigNum::new(negative.unwrap_or(IMPLICIT_SIGN), a, power as u32).unwrap())
             }
         }
@@ -123,7 +138,7 @@ impl BigNum {
 
 
     /// Returns a BigNum from a i32
-    /// The function simply convert the i32 into a string, then calls `BigNum::from_string()`
+    /// The function simply convert the i32 into a string, then calls [Self::from_string]
     /// 
     /// # Arguments
     /// 
@@ -142,7 +157,7 @@ impl BigNum {
         BigNum::from_string(&n.to_string())
     }
     /// Returns a BigNum from a f64
-    /// The function simply convert the f64 into a string, then calls `BigNum::from_string()`
+    /// The function simply convert the f64 into a string, then calls [Self::from_string]
     /// 
     /// # Arguments
     /// 
@@ -165,7 +180,8 @@ impl BigNum {
 
     
 
-    /// Modify the given bignums so they have the same power
+    /// Modify the given bignums so they have the same power.
+    /// Does not change their values
     fn same_power(n1: &mut BigNum, n2: &mut BigNum) {
         if n1.power < n2.power {n1.with_power(n2.power)}
         else {n2.with_power(n1.power)}
@@ -174,10 +190,25 @@ impl BigNum {
 
 
 
+    /// unclean one of the given BigNum so that both share the same amount of digits.
+    /// Does not change their values
+    fn same_digit_amount(n1: &mut BigNum, n2: &mut BigNum) {
+        while n1.abs.len() < n2.abs.len() {n1.abs.push(0);}
+        while n1.abs.len() > n2.abs.len() {n2.abs.push(0);}
+    }
+
+
+
+    /// Return true if n is 0 (or -0, but it should not happen)
+    pub fn is_zero(&self) -> bool {
+        if self.abs.is_empty() {panic!("Error: BigNum does not have any digit. Please report this error");}
+        self.abs.len() == 1 && self.abs[0] == 0
+    }
 
 
 
     /// Clean the BigNum from any useless information:
+    /// - useless significant zeroes (ex: 010 -> 10)
     /// - Reduce the power as much possible by removing useless decimal zeroes `(0.10 => 0.1)`
     /// - Prevent the representation of `-0`
     fn clean(&mut self) {
@@ -192,9 +223,11 @@ impl BigNum {
             self.power -= 1;
             self.abs.remove(0);
         }
+
+        core::ub_clean(&mut self.abs);
         
         // prevent -0
-        if (self.abs == vec![] || self.abs == vec![0]) && self.negative {
+        if self.is_zero() && self.negative {
             self.negative = false;
         }
     }
@@ -230,8 +263,7 @@ impl BigNum {
     /// ```
     pub fn opposite(&self) -> BigNum {
         // Prevent the creation of -0.
-        // we consider that self can't be -0 at the beginning
-        if self.abs == vec![] || self.abs == vec![0] {
+        if self.is_zero() {
             return self.clone();
         }
 
@@ -241,7 +273,7 @@ impl BigNum {
 
 
     /// Return true if n1 == n2
-    /// Will not work if both BigNums are not cleaned
+    /// Will not work if both [BigNum] are not cleaned
     fn are_equal(n1: &BigNum, n2: &BigNum) -> bool {
         n1.negative == n2.negative && n1.abs == n2.abs && n1.power == n2.power
     }
@@ -321,12 +353,13 @@ impl BigNum {
 
 
 
-    /// Return the BigNum multiplied by 10^power  
+    /// Return the [BigNum] multiplied by 10^power  
     /// This is quicker than using the basic multiplication algorithm
     /// as it's only a matter of adding or removing zeroes in the inner representation.
     /// 
     /// # Arguments
-    /// * `power` - A number so that BigNum is multiplied by 10^power
+    /// * `power` - A number so that self is multiplied by 10^power
+    /// * `pow_negative` - true = the power of ten is negative (ex: self * -10^3)
     /// 
     /// # Examples
     /// 
@@ -336,10 +369,10 @@ impl BigNum {
     /// let n1 = BigNum::from_string("123").unwrap();
     /// let n2 = BigNum::from_string("0.02423").unwrap();
     /// 
-    /// assert_eq!(n1.bn_tenpow_mul(2), BigNum::from_string("12300").unwrap());
-    /// assert_eq!(n2.bn_tenpow_mul(3), BigNum::from_string("24.23").unwrap());
+    /// assert_eq!(n1.bn_tenpow_mul(2, false), BigNum::from_string("12300").unwrap());
+    /// assert_eq!(n2.bn_tenpow_mul(3, true), BigNum::from_string("-24.23").unwrap());
     /// ```
-    pub fn bn_tenpow_mul(self, power: usize) -> BigNum {
+    pub fn bn_tenpow_mul(&self, power: usize, pow_negative: bool) -> BigNum {
         // result values
         let mut final_power = self.power;
         let mut abs = self.abs.clone();
@@ -352,18 +385,40 @@ impl BigNum {
             power -= 1;
         }
 
-        let mut res = BigNum {negative: self.negative, abs: abs, power: final_power};
+        let mut res = BigNum {negative: self.negative != pow_negative, abs: abs, power: final_power};
         res.clean();
         res
     }
 
 
 
-    /// Return the BigNum divided by 10^power
-    pub fn bn_tenpow_div(n: &BigNum, power: isize) -> BigNum {
+    /// Return the [BigNum] divided by 10^power  
+    /// This is -way- quicker than using the basic division algorithm
+    /// as it's only a matter of adding or removing zeroes in the inner representation.
+    /// 
+    /// # Arguments
+    /// * `power` - A number so that [BigNum] is divided by 10^power
+    /// * `pow_negative` - true = the power of ten is negative (ex: self * -10^3)
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("123").unwrap();
+    /// let n2 = BigNum::from_string("0.02423").unwrap();
+    /// let n3 = BigNum::from_string("-2498.244").unwrap();
+    /// 
+    /// assert_eq!(n1.bn_tenpow_div(2, false), BigNum::from_string("1.23").unwrap());
+    /// assert_eq!(n2.bn_tenpow_div(3, true), BigNum::from_string("-0.00002423").unwrap());
+    /// assert_eq!(n3.bn_tenpow_div(0, false), BigNum::from_string("-2498.244").unwrap());
+    /// ```
+    pub fn bn_tenpow_div(&self, power: isize, pow_negative: bool) -> BigNum {
         // very simple function as we only need to increase
         // the n.power by power
-        let mut res = BigNum {negative: n.negative, abs: n.abs.clone(), power: n.power + power as u32};
+        if power == 0 {return self.clone()}
+
+        let mut res = BigNum {negative: self.negative != pow_negative, abs: self.abs.clone(), power: self.power + power as u32};
         res.clean();
         res
     }
@@ -371,13 +426,13 @@ impl BigNum {
 
 
 
-    /// Return the multiplication of 2 BigNums
+    /// Return the multiplication of 2 [BigNum]
     pub fn bn_mul(n1: &BigNum, n2: &BigNum) -> BigNum {
-        // Maybe we could check if n2 is a power of ten to use bn_tenpow_mul here
+        // Maybe we could check if n2 is a power of ten to use bn_tenpow_mu; here
         // i don't know if it is worth it
 
         let sign = n1.negative != n2.negative;
-        let abs = core::ub_mul(n1.abs.clone(), n2.abs.clone());
+        let abs = core::ub_mul(&n1.abs, &n2.abs);
         let pow = n1.power + n2.power;
 
         let mut res = BigNum { negative: sign, abs: abs, power: pow };
@@ -389,8 +444,32 @@ impl BigNum {
 
 
 
-    /// Return the euclidian quotient and remainder of num / denom
-    pub fn euclidian(num: &BigNum, denom: &BigNum) -> (BigNum, BigNum) {
+    /// Return the "euclidian" quotient and remainder of num / denom.  
+    /// More precisely, it returns `q` and `r` so that `num = denom * q + r` with `r < denom`    
+    /// **Note:** division by zero is not allowed as, if `denom = 0`, we have `num = 0 * q + r`. In that case `q` does not have a defined value.
+    /// 
+    /// # Arguments
+    /// * `num` - the numerator of the division, >= 0
+    /// * `denum` - the denominator of the division, > 0
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("1332").unwrap();
+    /// let n2 = BigNum::from_string("12").unwrap();
+    /// let n3 = BigNum::zero();
+    /// 
+    /// assert_eq!(BigNum::euclidian(&n1, &n2), Ok((BigNum::from_string("111").unwrap(), BigNum::from_string("0").unwrap()))); 
+    /// assert_eq!(BigNum::euclidian(&n2, &n1), Ok((BigNum::zero(), BigNum::from_string("12").unwrap()))); 
+    /// assert!(BigNum::euclidian(&n1, &n3).is_err());
+    /// ```
+    pub fn euclidian(num: &BigNum, denom: &BigNum) -> Result<(BigNum, BigNum), String> {
+        assert_err!(!denom.is_zero(), "Division by zero");
+        assert_err!(!num.is_negative(), "The numerator cannot be negative");
+        assert_err!(!denom.is_negative(), "The denominator cannot be negative");
+
         let mut remainder = num.clone();
         let mut quotient = BigNum::zero();
 
@@ -399,7 +478,7 @@ impl BigNum {
             quotient = quotient + BigNum::one();
         }
 
-        (quotient, remainder)
+        Ok((quotient, remainder))
     }
 
 
@@ -442,8 +521,9 @@ impl BigNum {
         let mut n2 = n2.clone();
 
         BigNum::same_power(&mut n1, &mut n2);
+        BigNum::same_digit_amount(&mut n1, &mut n2);
 
-        let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs), n1.power).unwrap();
+        let mut res = BigNum::new(false, core::ub_sub(n1.abs, n2.abs).expect("internal error in inner_sub"), n1.power).unwrap();
 
         res.clean();
         res
@@ -454,7 +534,25 @@ impl BigNum {
     
 
 
-    /// Add two BigNums
+    /// Add two [BigNum] together
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("53643.368359").unwrap();
+    /// let n2 = BigNum::from_string("-22398247.24982").unwrap();
+    /// let n3 = BigNum::zero();
+    /// let n4 = BigNum::from_string("-32089").unwrap();
+    /// let n5 = BigNum::from_string("209").unwrap();
+    /// 
+    /// assert_eq!(BigNum::bn_add(&n1, &n1), BigNum::from_string("107286.736718").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n1, &n2), BigNum::from_string("-22344603.881461").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n2, &n3), BigNum::from_string("-22398247.24982").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n1, &n1), BigNum::from_string("107286.736718").unwrap());
+    /// assert_eq!(BigNum::bn_add(&n4, &n5), BigNum::from_string("-31880").unwrap());
+    /// ```
     pub fn bn_add(n1: &BigNum, n2: &BigNum) -> BigNum {
         // Transform the addition in order to use inner_add (addition of same sign)
         // or inner_sub (substraction of positive BigNums)
@@ -479,9 +577,26 @@ impl BigNum {
 
 
 
-    /// Substract two BigNums
+    /// Substract one [BigNum] to another
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("53643.368359").unwrap();
+    /// let n2 = BigNum::from_string("24872398247.24982").unwrap();
+    /// let n3 = BigNum::zero();
+    /// let n4 = BigNum::from_string("-32089").unwrap();
+    /// let n5 = BigNum::from_string("209").unwrap();
+    /// 
+    /// assert_eq!(BigNum::bn_sub(&n1, &n2), BigNum::from_string("-24872344603.881461").unwrap());
+    /// assert_eq!(BigNum::bn_sub(&n2, &n3), BigNum::from_string("24872398247.24982").unwrap());
+    /// assert_eq!(BigNum::bn_sub(&n1, &n1), BigNum::zero());
+    /// assert_eq!(BigNum::bn_sub(&n4, &n5), BigNum::from_string("-32298").unwrap());
+    /// ```
     pub fn bn_sub(n1: &BigNum, n2: &BigNum) -> BigNum {
-        match (n1.negative, n2.negative) {
+        let mut res = match (n1.negative, n2.negative) {
             (false, false) => {
                 if n1 < n2 {BigNum::inner_sub(n2, n1).opposite()} // require n1 > n2 :    (x-y) <=> -(y-x)
                 else {BigNum::inner_sub(n1, n2)}
@@ -495,7 +610,10 @@ impl BigNum {
             (false, true) => { // x - -y <=> x + y
                 n1 + n2
             },
-        }
+        };
+
+        res.clean();
+        res
     }
 
 
@@ -505,13 +623,13 @@ impl BigNum {
 
 
 
-    /// Divide one BigNum by another.  
+    /// Divide one [BigNum] by another.  
     /// The result will have a maximum precision of FLOAT_PRECISION digits after the dot. If the result is not perfect (ex: non-decimal values), the result
     /// will be NOT be rounded, so the actual precision will be +- 10^(-FLOAT_PRECISION)
     /// 
     /// # Arguments
-    /// * `n1` - a BigNum
-    /// * `n2` - a BigNum. Must not be zero or the operation results in an error.
+    /// * `n1` - a [BigNum]
+    /// * `n2` - a [BigNum]. Must not be zero or the operation results in an error.
     ///
     /// # Examples
     /// 
@@ -522,20 +640,18 @@ impl BigNum {
     /// let n2 = BigNum::from_string("12").unwrap();
     /// let n3 = BigNum::from_string("0").unwrap();
     /// 
-    /// assert_eq!(BigNum::bn_div(&n1, &n2), Ok(BigNum::from_string("102.019583333333333").unwrap()));
+    /// assert_eq!(BigNum::bn_div(&n1, &n2), Ok(BigNum::from_string("102.019583333333333").unwrap())); // considering FLOAT_PRECISION = 15
     /// assert!(BigNum::bn_div(&n1, &n3).is_err());
     /// ```
     pub fn bn_div(n1: &BigNum, n2: &BigNum) -> Result<BigNum, String> {
         // prevent zero division
-        if n2.abs == vec![] || n2.abs == vec![0] {
-            return Err("Division by zero".to_string());
-        }
+        assert_err!(!n2.is_zero(), "Division by zero");
 
         // checking if n2 is a power of ten
         // really worth it (compared to bn_mul) as it could prevent precision lost
         // (the normal algorithm would return 10 / 100 = 0.0999999999)
         match n2.is_power_of_ten() {
-            Some(p) => return Ok(BigNum::bn_tenpow_div(n1, p)),
+            Some(p) => return Ok(BigNum::bn_tenpow_div(n1, p, n2.is_negative())),
             None => ()
         };
 
@@ -554,10 +670,10 @@ impl BigNum {
 
 
         let (quotient, _) = if n2.abs.len() == 1 {
-            let (q, r) = core::ub_shortdiv(n1.abs, n2.abs[0]);
+            let (q, r) = core::ub_shortdiv(n1.abs, n2.abs[0]).expect("n2 was not clean when passed to bn_div, resulting in a division by 0"); // n2.abs[0] should not be 0
             (q, vec![r])
         } else {
-            core::ub_div(n1.abs, n2.abs)
+            core::ub_div(&n1.abs, &n2.abs)?
         };
         
         debug_assert!(n1.power - n2.power > 0, "resulting power is negative");
@@ -570,7 +686,47 @@ impl BigNum {
     }
 
 
+
+
+    /// Compute the power to the nth of the given [BigNum].
+    ///
+    /// # Arguments
+    /// 
+    /// * `n` - a [BigNum]
+    /// * `p` - an i32 representing the power. As of now, decimal powers are not supported
+    /// 
+    /// # Examples
+    /// ```
+    /// use sloth_num::BigNum;
+    /// 
+    /// let n1 = BigNum::from_string("123").unwrap();
+    /// let n2 = BigNum::from_string("-10").unwrap();
+    /// let n3 = BigNum::from_string("2.5").unwrap();
+    /// 
+    /// assert_eq!(BigNum::bn_pow(&n1, 5), BigNum::from_string("28153056843").unwrap());
+    /// assert_eq!(BigNum::bn_pow(&n1, 1), BigNum::from_string("123").unwrap());
+    /// assert_eq!(BigNum::bn_pow(&n2, -3), BigNum::from_string("-0.001").unwrap());
+    /// assert_eq!(BigNum::bn_pow(&n3, 5), BigNum::from_string("97.65625").unwrap());
+    /// assert_eq!(BigNum::bn_pow(&n1, 0), BigNum::one());
+    /// ```
+    pub fn bn_pow(n: &BigNum, p: i32) -> BigNum {
+        // exit conditions (this function is recursive)
+        if p == 0 {return BigNum::one()}
+        if p == 1 {return n.clone()}
+
+        // ex: 10^4 = 10^2 * 10^2
+        let temp = BigNum::bn_pow(n, p/2);
+
+        let res = if p % 2 == 0 {&temp * &temp}
+        else if p > 0 {&(&temp * &temp) * n}
+        else {&(&temp * &temp) / n};
+
+        res
+    }
 }
+
+
+
 
 
 
@@ -643,52 +799,41 @@ impl PartialOrd for BigNum {
 
 
 
-
-
-
-impl Add for &BigNum {
-    type Output = BigNum;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        BigNum::bn_add(self, rhs)
-    }
+macro_rules! op_impl {
+    ($op:ty, $op_f:ident, $bn_f:ident) => {
+        impl $op for &BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(self, rhs)
+            }
+        }
+        impl $op for BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(&self, &rhs)
+            }
+        }
+    };
 }
-impl Add for BigNum {
-    type Output = BigNum;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        BigNum::bn_add(&self, &rhs)
-    }
+macro_rules! op_impl_unwrap {
+    ($op:ty, $op_f:ident, $bn_f:ident) => {
+        impl $op for &BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(self, rhs).unwrap()
+            }
+        }
+        impl $op for BigNum {
+            type Output = BigNum;
+            fn $op_f(self, rhs: Self) -> Self::Output {
+                BigNum::$bn_f(&self, &rhs).unwrap()
+            }
+        }
+    };
 }
 
 
-impl Sub for &BigNum {
-    type Output = BigNum;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        BigNum::bn_sub(self, rhs)
-    }
-}
-impl Sub for BigNum {
-    type Output = BigNum;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        BigNum::bn_sub(&self, &rhs)
-    }
-}
-
-
-impl Mul for &BigNum {
-    type Output = BigNum;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        BigNum::bn_mul(self, rhs)
-    }
-}
-impl Mul for BigNum {
-    type Output = BigNum;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        BigNum::bn_mul(&self, &rhs)
-    }
-}
+op_impl!(Add, add, bn_add);
+op_impl!(Sub, sub, bn_sub);
+op_impl!(Mul, mul, bn_mul);
+op_impl_unwrap!(Div, div, bn_div);
