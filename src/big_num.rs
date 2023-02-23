@@ -723,6 +723,16 @@ impl BigNum {
 
         res
     }
+
+
+
+
+
+    // wrapping functions that return a Result (like the bn_div function) to facilitate the use of
+    // the op_impl macro
+    fn result_bn_sub(n1: &BigNum, n2: &BigNum) -> Result<BigNum, ()> {Ok(BigNum::bn_sub(n1, n2))}
+    fn result_bn_add(n1: &BigNum, n2: &BigNum) -> Result<BigNum, ()> {Ok(BigNum::bn_add(n1, n2))}
+    fn result_bn_mul(n1: &BigNum, n2: &BigNum) -> Result<BigNum, ()> {Ok(BigNum::bn_mul(n1, n2))}
 }
 
 
@@ -803,37 +813,17 @@ macro_rules! op_impl {
     ($op:ty, $op_f:ident, $bn_f:ident) => {
         impl $op for &BigNum {
             type Output = BigNum;
-            fn $op_f(self, rhs: Self) -> Self::Output {
-                BigNum::$bn_f(self, rhs)
-            }
+            fn $op_f(self, rhs: Self) -> Self::Output {BigNum::$bn_f(self, rhs).unwrap()}
         }
         impl $op for BigNum {
             type Output = BigNum;
-            fn $op_f(self, rhs: Self) -> Self::Output {
-                BigNum::$bn_f(&self, &rhs)
-            }
-        }
-    };
-}
-macro_rules! op_impl_unwrap {
-    ($op:ty, $op_f:ident, $bn_f:ident) => {
-        impl $op for &BigNum {
-            type Output = BigNum;
-            fn $op_f(self, rhs: Self) -> Self::Output {
-                BigNum::$bn_f(self, rhs).unwrap()
-            }
-        }
-        impl $op for BigNum {
-            type Output = BigNum;
-            fn $op_f(self, rhs: Self) -> Self::Output {
-                BigNum::$bn_f(&self, &rhs).unwrap()
-            }
+            fn $op_f(self, rhs: Self) -> Self::Output {BigNum::$bn_f(&self, &rhs).unwrap()}
         }
     };
 }
 
 
-op_impl!(Add, add, bn_add);
-op_impl!(Sub, sub, bn_sub);
-op_impl!(Mul, mul, bn_mul);
-op_impl_unwrap!(Div, div, bn_div);
+op_impl!(Add, add, result_bn_add);
+op_impl!(Sub, sub, result_bn_sub);
+op_impl!(Mul, mul, result_bn_mul);
+op_impl!(Div, div, bn_div);
