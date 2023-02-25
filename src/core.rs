@@ -30,6 +30,8 @@ pub fn ub_clean(ubint: &mut Vec<u8>) {
     }
 }
 
+
+
 /// Return a cleaned version of the unsigned big int by removing useless zeroes.  
 /// Will keep one zero if it is already here (ex: `vec![0, 0, 0] -> vec![0]`)
 /// 
@@ -59,6 +61,8 @@ pub fn ub_cleaned(ubint: Vec<u8>) -> Vec<u8> {
 
     res
 }
+
+
 
 
 
