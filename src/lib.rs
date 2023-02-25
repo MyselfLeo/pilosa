@@ -1,6 +1,6 @@
-//! # SlothNum
+//! # Pilosa
 //! 
-//! The big number library created for and used by the programming language [Sloth](https://crates.io/crates/slothlang).
+//! A big number library
 //! 
 //! The main struct is [BigNum]. In most of the cases, you won't need to use [core].
 

@@ -14,7 +14,7 @@ use crate::assert_err;
 /// # Examples
 /// 
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// let mut number = vec![0, 2, 4, 9, 6, 0, 0]; // 0069420
 /// core::ub_clean(&mut number);                // -> 69420
@@ -40,7 +40,7 @@ pub fn ub_clean(ubint: &mut Vec<u8>) {
 /// # Examples
 /// 
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// let mut number = vec![0, 2, 4, 9, 6, 0, 0];                 // 0069420
 /// assert_eq!(core::ub_cleaned(number), vec![0, 2, 4, 9, 6]);  // -> 69420
@@ -73,7 +73,7 @@ pub fn ub_cleaned(ubint: Vec<u8>) -> Vec<u8> {
 /// 
 /// # Examples
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// let n1 = vec![3, 6, 7, 2];     // 2763
 /// let n2 = vec![4, 6, 3];        // 364
@@ -112,7 +112,7 @@ pub fn ub_is_lower(u: &Vec<u8>, v: &Vec<u8>) -> bool {
 /// 
 /// # Examples
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// let n1 = vec![3, 6, 7, 2];     // 2763
 /// let n2 = vec![4, 6, 3];        // 364
@@ -168,7 +168,7 @@ pub fn ub_add(u: Vec<u8>, v: Vec<u8>) -> Vec<u8> {
 /// # Examples
 /// 
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// // the numbers must have the same amount of digits
 /// let n1 = vec![3, 6, 7, 2];     // 2763
@@ -219,7 +219,7 @@ pub fn ub_sub(u: Vec<u8>, v: Vec<u8>) -> Result<Vec<u8>, String> {
 /// # Examples
 /// 
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// // the numbers must have the same amount of digits
 /// let n1 = vec![3, 6, 7, 2];   // 2763
@@ -285,7 +285,7 @@ pub fn ub_mul(u: &Vec<u8>, v: &Vec<u8>) -> Vec<u8> {
 /// # Examples
 /// 
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// let n1 = vec![3, 6, 7, 2];     // 2763
 /// let n2 = vec![4, 6, 3];        // 364
@@ -339,7 +339,7 @@ pub fn ub_shortdiv(u: Vec<u8>, v: u8) -> Result<(Vec<u8>, u8), String> {
 /// # Examples
 /// 
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// let n1 = vec![3, 6, 7, 2];     // 2763
 /// let n2 = vec![4, 6, 3];        // 364
@@ -593,7 +593,7 @@ fn inner_div(u: &Vec<u8>, v: &Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 /// # Examples
 /// 
 /// ```
-/// use sloth_num::core;
+/// use pilosa::core;
 /// 
 /// let n1 = vec![0, 0, 0, 1]; // 1000
 /// let n2 = vec![1, 0, 3];    // 301
